@@ -19,6 +19,7 @@ namespace Caesar_decoder_encoder.Views
     /// </summary>
     public partial class AlphabetChoice : Window
     {
+        public string Alphabet { get; set; } = string.Empty;
         public AlphabetChoice()
         {
             InitializeComponent();

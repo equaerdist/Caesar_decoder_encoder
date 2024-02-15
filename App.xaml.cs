@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Caesar_decoder_encoder.Infrastructure.Extensions;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -39,7 +40,7 @@ namespace Caesar_decoder_encoder
             builder.UseContentRoot(Environment.CurrentDirectory)
                 .ConfigureServices((context, services) =>
                 {
-
+                    services.Configure();
                 });
             return builder.Build();
         }

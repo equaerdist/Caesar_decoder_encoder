@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Caesar_decoder_encoder"
+             xmlns:commands="clr-namespace:Caesar_decoder_encoder.Infrastructure.Commands"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -9,6 +10,8 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml"></ResourceDictionary>
                 <ResourceDictionary Source="Resources/Styles/Controls.xaml"></ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
+            <commands:CloseDialogCommand x:Key="close_commad" DialogResult="False"></commands:CloseDialogCommand>
+            <commands:CloseDialogCommand x:Key="ok_command" DialogResult="True"></commands:CloseDialogCommand>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

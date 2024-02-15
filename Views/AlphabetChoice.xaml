@@ -4,14 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Caesar_decoder_encoder.Views"
+        DataContext="{Binding RelativeSource={RelativeSource self}}"
         mc:Ignorable="d"
         Title="AlphabetChoice" Height="450" Width="800">
     <Grid Background="{StaticResource background}">
         <UniformGrid Rows="2" Columns="1" VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Foreground="{StaticResource text}">Выберите алфавит</TextBlock>
             <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
-                <Button>Русский</Button>
-                <Button Margin="30,0,0,0">Английский</Button>
+                <Button Command="{StaticResource ok_command}" 
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">Русский</Button>
+                <Button Margin="30,0,0,0"
+                        Command="{StaticResource close_commad}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        >Английский</Button>
+               
             </StackPanel>
         </UniformGrid>
     </Grid>

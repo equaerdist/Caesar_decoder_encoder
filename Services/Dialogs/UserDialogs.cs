@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Caesar_decoder_encoder.Views;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,10 @@ namespace Caesar_decoder_encoder.Services.Dialogs
     {
         public void ShowAlphabetChoice(out string choice)
         {
-            throw new NotImplementedException();
+            var dialog = new AlphabetChoice();
+            var result = dialog.ShowDialog();
+            var language = result == true ? "Russian" : "English";
+            choice = language;
         }
     }
 }

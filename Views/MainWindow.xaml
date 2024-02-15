@@ -7,6 +7,34 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid Background="{StaticResource background}">
-
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" Background="{StaticResource main}">
+                <MenuItem Header="Опции">
+                    <MenuItem Header="Сменить алфавит"></MenuItem>
+                </MenuItem>
+            </Menu>
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <TextBox Grid.Row="0" 
+                         MinHeight="100"></TextBox>
+                <DockPanel 
+                             Grid.Row="1"
+                            Margin="0,20,0,0">
+                    <TextBlock DockPanel.Dock="Left">Ключ</TextBlock>
+                    <TextBox Margin="20,0,0,0"></TextBox>
+                </DockPanel>
+               
+                <StackPanel Orientation="Horizontal" 
+                            Grid.Row="2" 
+                            Margin="0,20,0,0">
+                    <Button>Зашифровать</Button>
+                    <Button Margin="20,0,0,0">Показать оригинал</Button>
+                </StackPanel>
+            </Grid>
+        </DockPanel>
     </Grid>
 </Window>
