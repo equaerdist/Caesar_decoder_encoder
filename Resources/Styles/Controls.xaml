@@ -6,6 +6,23 @@
         <Setter Property="Foreground" Value="{StaticResource text}"></Setter>
         <Setter Property="FontSize" Value="20"></Setter>
         <Setter Property="FontWeight" Value="Bold"></Setter>
+        <Setter Property="BorderBrush" Value="Transparent"></Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}" 
+                            CornerRadius="10" 
+                            Background="{TemplateBinding Background}">
+                        <Grid HorizontalAlignment="Center" 
+                              VerticalAlignment="Center"
+                              Margin="{TemplateBinding Padding}">
+                            <ContentPresenter Content="{TemplateBinding Content}">
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <Style TargetType="TextBlock">
         <Setter Property="FontSize" Value="20"></Setter>
