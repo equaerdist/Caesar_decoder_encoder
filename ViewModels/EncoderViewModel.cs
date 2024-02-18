@@ -10,6 +10,7 @@ namespace Caesar_decoder_encoder.ViewModels
 {
     class EncoderViewModel : BaseViewModel
     {
+		private string? _originalContent;
 		private string _content = string.Empty;
 
 		public string Content

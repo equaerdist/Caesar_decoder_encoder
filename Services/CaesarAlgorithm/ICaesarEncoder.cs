@@ -8,6 +8,6 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
 {
     public interface ICaesarEncoder
     {
-        string Encode(string content);
+        Task<string> EncodeAsync(string content);
     }
 }
