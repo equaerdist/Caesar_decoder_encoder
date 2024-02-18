@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Caesar_decoder_encoder"
              xmlns:commands="clr-namespace:Caesar_decoder_encoder.Infrastructure.Commands"
+             xmlns:vm="clr-namespace:Caesar_decoder_encoder.ViewModels"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -12,6 +13,7 @@
             </ResourceDictionary.MergedDictionaries>
             <commands:CloseDialogCommand x:Key="close_commad" DialogResult="False"></commands:CloseDialogCommand>
             <commands:CloseDialogCommand x:Key="ok_command" DialogResult="True"></commands:CloseDialogCommand>
+            <vm:ViewModelLocator x:Key="Locator"></vm:ViewModelLocator>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

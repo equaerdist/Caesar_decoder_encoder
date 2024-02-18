@@ -8,5 +8,6 @@ namespace Caesar_decoder_encoder.ViewModels
 {
     public class ViewModelLocator
     {
+        public EncoderViewModel MainViewModel => App.HostInstance.Services.GetRequiredService<EncoderViewModel>();
     }
 }

@@ -1,4 +1,6 @@
-﻿using Caesar_decoder_encoder.Services.Dialogs;
+﻿using Caesar_decoder_encoder.Services.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Dialogs;
+using Caesar_decoder_encoder.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -12,7 +14,8 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
     {
         public static IServiceCollection Configure(this IServiceCollection services)
         {
-            return services.AddSingleton<IUserDialog, UserDialogs>();
+            return services.AddSingleton<ICaesarCipher, CaesarCipher>()
+                .AddSingleton<EncoderViewModel>();
         }
     }
 }
