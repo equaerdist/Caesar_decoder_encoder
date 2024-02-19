@@ -56,7 +56,8 @@ namespace Caesar_decoder_encoder.ViewModels
         #region Зашифровать
         public ICommand Encode { get; set; }
 		private bool CanEncodeExecuted(object? p) => true;
-		private bool CheckContent(out string message)
+        #region валидация
+        private bool CheckContent(out string message)
 		{
 			message = string.Empty;
             Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
@@ -77,7 +78,8 @@ namespace Caesar_decoder_encoder.ViewModels
 			}         
 			return true;
         }
-		private async void OnEncodeExecuted(object? p)
+        #endregion
+        private async void OnEncodeExecuted(object? p)
 		{
 			try
 			{
