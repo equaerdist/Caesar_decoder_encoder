@@ -41,9 +41,6 @@
                         <TextBox Margin="20,0,0,0" >
                             <TextBox.Text>
                                 <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
-                                    <Binding.Converter>
-                                        <conv:KeyConverter ></conv:KeyConverter>
-                                    </Binding.Converter>
                                 </Binding>
                             </TextBox.Text>
                         </TextBox>

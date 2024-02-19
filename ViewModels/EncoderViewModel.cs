@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,7 +18,7 @@ using System.Windows.Input;
 
 namespace Caesar_decoder_encoder.ViewModels
 {
-    public class EncoderViewModel : BaseViewModel
+    public class EncoderViewModel : ValidationViewModel
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
@@ -48,25 +49,26 @@ namespace Caesar_decoder_encoder.ViewModels
 			{
 				Func<char, bool> validator = SelectedLanguage.Equals("Russian") ? 
 					Alphabet.IsRussianLetter : Alphabet.IsEnglishLetter;
-				if (value.All(validator))
-					Set(ref _content, value);
-				else
-					MessageBox.Show("Другая раскладка");
+				RemoveErrors();
+				if (!_content.All(validator))
+					AddError("Неправильная раскладка");
+				Set(ref _content, value);
 			}
 		}
         #endregion
         #region Зашифровать
         public ICommand Encode { get; set; }
-		private bool CanEncodeExecuted(object? p) => true;
+		private bool CanEncodeExecuted(object? p) => true && !HasErrors;
 		private async void OnEncodeExecuted(object? p)
 		{
 			try
 			{
+				var key = BigInteger.Parse(Key);
 				Editable = false;
                 _tokenSource = new CancellationTokenSource();
                 var language = SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
                 var progress = new Progress<double>(v => ProgressValue = v);
-                string result = await _cipher.EncodeAsync(Content, Key, language, progress, _tokenSource.Token);
+                string result = await _cipher.EncodeAsync(Content, key, language, progress, _tokenSource.Token);
                 _previous.Add(Content);
                 Content = result;
             }
@@ -83,14 +85,22 @@ namespace Caesar_decoder_encoder.ViewModels
 			}
 		}
 
-        #endregion
-        #region ключ
-        private BigInteger _key = new BigInteger(5);
+		#endregion
+		#region ключ
+		private string _key = string.Empty;
 
-		public BigInteger Key
+		public string Key
 		{
 			get => _key;
-			set => Set(ref _key, value);
+			set 
+			{
+				string pattern = @"^-?\d+$";
+                RemoveErrors();
+				if (!Regex.IsMatch(value, pattern))
+					AddError("Число должно быть целым");
+			    var composed = (char ch) => Char.IsDigit(ch);
+				Set(ref _key, value); 
+			}
 		}
         #endregion
         #region выбранный язык

@@ -42,7 +42,7 @@ namespace Caesar_decoder_encoder.ViewModels
                 throw new ArgumentNullException();
             if (_errors.ContainsKey(propertyName))
             {
-                _errors[propertyName].Clear();
+                _errors.Remove(propertyName);
                 OnErorrsChanged(propertyName);
             }
         }
