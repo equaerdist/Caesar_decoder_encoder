@@ -1,6 +1,8 @@
 ﻿using Caesar_decoder_encoder.Infrastructure.Commands;
 using Caesar_decoder_encoder.Models;
+using Caesar_decoder_encoder.Services;
 using Caesar_decoder_encoder.Services.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,6 +12,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace Caesar_decoder_encoder.ViewModels
@@ -18,20 +21,11 @@ namespace Caesar_decoder_encoder.ViewModels
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
-        #region проверка на соответствие
-        static bool IsRussianLetter(char ch)
-        {
-            return (ch >= 'а' && ch <= 'я') || (ch >= 'А' && ch <= 'Я') || ch == 'ё' || ch == 'Ё';
-        }
-
-        static bool IsEnglishLetter(char ch)
-        {
-            return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
-        }
-        #endregion
+       
         private double _progressValue;
-		private bool _editable = true;
         #region Редактируема
+        private bool _editable = true;
+
         public bool Editable
 		{
 			get { return _editable; }
@@ -52,9 +46,12 @@ namespace Caesar_decoder_encoder.ViewModels
 			get { return _content; }
 			set  
 			{
-				var validator = SelectedLanguage.Equals("Russian") ? IsRussianLetter : IsEnglishLetter;
+				Func<char, bool> validator = SelectedLanguage.Equals("Russian") ? 
+					Alphabet.IsRussianLetter : Alphabet.IsEnglishLetter;
 				if (value.All(validator))
 					Set(ref _content, value);
+				else
+					MessageBox.Show("Другая раскладка");
 			}
 		}
         #endregion
@@ -66,17 +63,17 @@ namespace Caesar_decoder_encoder.ViewModels
 			try
 			{
 				Editable = false;
-				_tokenSource = new CancellationTokenSource();
-				var language = SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
-				var progress = new Progress<double>();
-				progress.ProgressChanged += (s, v) => ProgressValue = v;
-				string result = await _cipher.EncodeAsync(Content, Key, language, progress, _tokenSource.Token);
-				_previous.Add(Content);
-				Content = result;
-			}
+                _tokenSource = new CancellationTokenSource();
+                var language = SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
+                var progress = new Progress<double>(v => ProgressValue = v);
+                string result = await _cipher.EncodeAsync(Content, Key, language, progress, _tokenSource.Token);
+                _previous.Add(Content);
+                Content = result;
+            }
 			catch(Exception ex)
 			{
 				Debug.WriteLine(ex.Message);
+				_dialogs.ShowError(ex.Message);
 			}
 			finally
 			{
@@ -105,8 +102,9 @@ namespace Caesar_decoder_encoder.ViewModels
 			set => Set(ref _language, value);
 		}
 		#endregion
-		public ObservableCollection<string> Languages;
+		public ObservableCollection<string> Languages { get; set; }
         private readonly ICaesarCipher _cipher;
+        private readonly IUserDialogs _dialogs;
         #region команда возвращения
         public ICommand ShowPrevious { get; }
 		private void OnShowPreviousExecuted(object? p)
@@ -117,13 +115,13 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanShowPreviousExecuted(object? p) => _previous.Count >= 1;
         #endregion
-        public EncoderViewModel(ICaesarCipher cipher)
+        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs)
 		{
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
-			Languages = new() { SelectedLanguage };
-			Languages.Add("English");
+			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
+			_dialogs = dialogs;
 		}
 	}
 }

@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Caesar_decoder_encoder.Services.Dialogs
 {
-    public class IUserDialogs
+    public interface IUserDialogs
     {
         void ShowError(string message);
+
     }
 }

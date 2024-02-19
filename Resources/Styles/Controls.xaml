@@ -26,7 +26,6 @@
     </Style>
     <Style TargetType="TextBlock">
         <Setter Property="FontSize" Value="20"></Setter>
-        <Setter Property="Foreground" Value="{StaticResource text}"></Setter>
         <Setter Property="HorizontalAlignment" Value="Center"></Setter>
         <Setter Property="VerticalAlignment" Value="Center"></Setter>
     </Style>

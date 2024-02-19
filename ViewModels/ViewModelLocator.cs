@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace Caesar_decoder_encoder.ViewModels
 {
     public class ViewModelLocator
     {
-        public EncoderViewModel MainViewModel => App.HostInstance.Services.GetRequiredService<EncoderViewModel>();
+        public static EncoderViewModel MainViewModel => App.HostInstance.Services.GetRequiredService<EncoderViewModel>();
     }
 }

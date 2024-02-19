@@ -22,10 +22,10 @@ namespace Caesar_decoder_encoder.ViewModels
                 if(action?.Target is DispatcherObject dispatcherObject)
                     dispatcherObject.Dispatcher.Invoke(
                         action, 
-                        new PropertyChangedEventArgs(propertyName)
-                        );
+                        this,
+                        new PropertyChangedEventArgs(propertyName));
                 else
-                    action?.DynamicInvoke(new PropertyChangedEventArgs(propertyName));
+                    action?.DynamicInvoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
         protected bool Set<T>(ref T oldValue, T newValue, [CallerMemberName] string? propertyName = null)

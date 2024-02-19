@@ -4,10 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Caesar_decoder_encoder"
+        xmlns:conv="clr-namespace:Caesar_decoder_encoder.Infrastructure.Converters"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         DataContext="{Binding Source={StaticResource Locator}, Path=MainViewModel}">
     <Grid Background="{StaticResource background}">
+        <Grid.Resources>
+            <Style TargetType="DockPanel" x:Key="progress_bar">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ProgressValue}" Value="0">
+                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
         <DockPanel>
             <StackPanel Orientation="Horizontal"></StackPanel>
             <Grid Margin="20">
@@ -15,9 +25,11 @@
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" 
-                         MinHeight="100" Text="{Binding Content}"></TextBox>
+                <TextBox Grid.Row="0"
+                         MinHeight="100" Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding Editable}"></TextBox>
                 <Grid  Grid.Row="1" 
                     Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
@@ -25,20 +37,38 @@
                         <ColumnDefinition></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <DockPanel Grid.Column="0">
-                        <TextBlock>Ключ</TextBlock>
-                        <TextBox Margin="20,0,0,0" Text="{Binding Key}"></TextBox>
+                        <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
+                        <TextBox Margin="20,0,0,0" >
+                            <TextBox.Text>
+                                <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
+                                    <Binding.Converter>
+                                        <conv:KeyConverter ></conv:KeyConverter>
+                                    </Binding.Converter>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
                     </DockPanel>
                     <GridSplitter></GridSplitter>
                     <ComboBox Grid.Column="1" Margin="40,0,0,0"
-                              ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"></ComboBox>
+                              ItemsSource="{Binding Languages}" 
+                              SelectedItem="{Binding SelectedLanguage}" 
+                              Foreground="{StaticResource main}"></ComboBox>
                 </Grid>
                
                 <StackPanel Orientation="Horizontal" 
                             Grid.Row="2" 
                             Margin="0,20,0,0">
                     <Button Command="{Binding Encode}">Зашифровать</Button>
-                    <Button Margin="20,0,0,0">Показать предыдущее</Button>
+                    <Button Margin="20,0,0,0" Command="{Binding ShowPrevious}">Показать предыдущее</Button>
                 </StackPanel>
+                <DockPanel Grid.Row="3"
+                           Margin="0,20,0,0"
+                           Style="{StaticResource progress_bar}">
+                    <TextBlock Text="{Binding ProgressValue, StringFormat='Выполнено {0}'}"
+                               Foreground="{StaticResource text}"
+                               DockPanel.Dock="Left" Width="20"></TextBlock>
+                    <ProgressBar Value="{Binding ProgressValue}" Minimum="0" Maximum="1" Margin="50,0,0,0"></ProgressBar>
+                </DockPanel>
             </Grid>
         </DockPanel>
     </Grid>
