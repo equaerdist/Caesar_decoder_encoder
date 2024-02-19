@@ -15,7 +15,8 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
         public static IServiceCollection Configure(this IServiceCollection services)
         {
             return services.AddSingleton<ICaesarCipher, CaesarCipher>()
-                .AddSingleton<EncoderViewModel>();
+                .AddSingleton<EncoderViewModel>()
+                .AddSingleton<IUserDialogs, UserDialogs>();
         }
     }
 }

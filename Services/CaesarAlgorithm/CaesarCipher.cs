@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -11,19 +12,23 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
 {
     public class CaesarCipher : ICaesarCipher
     {
-        public Task<string> DecodeAsync(string content, out BigInteger key, Language language)
+        public Task<string> DecodeAsync(string content, out BigInteger key, Language language, 
+            IProgress<double> progress, CancellationToken token = default)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<string> EncodeAsync(string content, BigInteger key, Language language)
+        public async Task<string> EncodeAsync(string content, BigInteger key, Language language, 
+            IProgress<double> progress, CancellationToken token = default)
         {
             return await Task.Run(() =>
             {
                 StringBuilder encryptedText = new StringBuilder();
 
-                foreach (char ch in content)
+                for(int i=0; i < content.Length;i++)
                 {
+                    progress.Report(i / content.Length);
+                    var ch = content[i];
                     if (char.IsLetter(ch))
                     {
                         int alphabetStart = language == Language.Russian ? (int)'а' : (int)'a';
@@ -39,7 +44,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                 }
 
                 return encryptedText.ToString();
-            });
+            }, token);
         }
     }
 }

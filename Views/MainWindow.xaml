@@ -17,7 +17,7 @@
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" 
-                         MinHeight="100"></TextBox>
+                         MinHeight="100" Text="{Binding Content}"></TextBox>
                 <Grid  Grid.Row="1" 
                     Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
@@ -26,16 +26,17 @@
                     </Grid.ColumnDefinitions>
                     <DockPanel Grid.Column="0">
                         <TextBlock>Ключ</TextBlock>
-                        <TextBox Margin="20,0,0,0"></TextBox>
+                        <TextBox Margin="20,0,0,0" Text="{Binding Key}"></TextBox>
                     </DockPanel>
                     <GridSplitter></GridSplitter>
-                    <ComboBox Grid.Column="1" Margin="40,0,0,0"></ComboBox>
+                    <ComboBox Grid.Column="1" Margin="40,0,0,0"
+                              ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"></ComboBox>
                 </Grid>
                
                 <StackPanel Orientation="Horizontal" 
                             Grid.Row="2" 
                             Margin="0,20,0,0">
-                    <Button>Зашифровать</Button>
+                    <Button Command="{Binding Encode}">Зашифровать</Button>
                     <Button Margin="20,0,0,0">Показать предыдущее</Button>
                 </StackPanel>
             </Grid>
