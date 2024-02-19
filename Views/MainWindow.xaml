@@ -59,7 +59,10 @@
                 <StackPanel Orientation="Horizontal" 
                             Grid.Row="2" 
                             Margin="0,20,0,0">
-                    <Button Command="{Binding Encode}">Зашифровать</Button>
+                    <Button Command="{Binding Encode}" CommandParameter="positive">Зашифровать</Button>
+                    <Button Command="{Binding Encode}"
+                            CommandParameter="negative"
+                            Margin="20,0,0,0">Расшифровать</Button>
                     <Button Margin="20,0,0,0" Command="{Binding ShowPrevious}">Показать предыдущее</Button>
                 </StackPanel>
                 <DockPanel Grid.Row="4"

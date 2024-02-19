@@ -47,23 +47,56 @@ namespace Caesar_decoder_encoder.ViewModels
 			get { return _content; }
 			set  
 			{
-				Func<char, bool> validator = SelectedLanguage.Equals("Russian") ? 
-					Alphabet.IsRussianLetter : Alphabet.IsEnglishLetter;
+				
 				RemoveErrors();
-				if (!_content.All(validator))
-					AddError("Неправильная раскладка");
 				Set(ref _content, value);
 			}
 		}
         #endregion
         #region Зашифровать
         public ICommand Encode { get; set; }
-		private bool CanEncodeExecuted(object? p) => true && !HasErrors;
+		private bool CanEncodeExecuted(object? p) => true;
+		private bool CheckContent(out string message)
+		{
+			message = string.Empty;
+            Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
+                    Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
+			if (!Content.Any(validator))
+				return true;
+			message = "Текст содержит символы другой раскладки";
+			return false;
+        }
+		private bool CheckKey(out string message)
+		{
+			message = string.Empty;
+            string pattern = @"^-?\d+$";
+            if (!Regex.IsMatch(Key, pattern))
+			{
+				message = "Число должно быть целым";
+				return false;
+			}         
+			return true;
+        }
 		private async void OnEncodeExecuted(object? p)
 		{
 			try
 			{
-				var key = BigInteger.Parse(Key);
+				if (!(p is string))
+					throw new ArgumentException();
+				var multiply = (string)p;
+				var multiplier = multiply == "positive" ? 1 : -1;
+				string errorMessage = string.Empty;
+				if(!CheckContent(out errorMessage))
+				{
+					_dialogs.ShowError(errorMessage);
+					return;
+				}
+				if(!CheckKey(out errorMessage))
+				{
+					_dialogs.ShowError(errorMessage);
+					return;
+				}
+                var key = BigInteger.Parse(Key) * multiplier;
 				Editable = false;
                 _tokenSource = new CancellationTokenSource();
                 var language = SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
@@ -94,11 +127,8 @@ namespace Caesar_decoder_encoder.ViewModels
 			get => _key;
 			set 
 			{
-				string pattern = @"^-?\d+$";
+				
                 RemoveErrors();
-				if (!Regex.IsMatch(value, pattern))
-					AddError("Число должно быть целым");
-			    var composed = (char ch) => Char.IsDigit(ch);
 				Set(ref _key, value); 
 			}
 		}
