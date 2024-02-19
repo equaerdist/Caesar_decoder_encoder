@@ -11,9 +11,13 @@
     <Grid Background="{StaticResource background}">
         <Grid.Resources>
             <Style TargetType="DockPanel" x:Key="progress_bar">
+                <Setter Property="Visibility" Value="Visible"></Setter>
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding ProgressValue}" Value="0">
-                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                        <Setter Property="Visibility" Value="Hidden"></Setter>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding ProgressValue}" Value="1">
+                        <Setter Property="Visibility" Value="Hidden"></Setter>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
@@ -58,13 +62,18 @@
                     <Button Command="{Binding Encode}">Зашифровать</Button>
                     <Button Margin="20,0,0,0" Command="{Binding ShowPrevious}">Показать предыдущее</Button>
                 </StackPanel>
-                <DockPanel Grid.Row="3"
+                <DockPanel Grid.Row="4"
                            Margin="0,20,0,0"
-                           Style="{StaticResource progress_bar}">
-                    <TextBlock Text="{Binding ProgressValue, StringFormat='Выполнено {0}'}"
+                           Style="{StaticResource progress_bar}"
+                           >
+                    <TextBlock Text="{Binding ProgressValue, StringFormat=' {0}'}"
                                Foreground="{StaticResource text}"
                                DockPanel.Dock="Left" Width="20"></TextBlock>
-                    <ProgressBar Value="{Binding ProgressValue}" Minimum="0" Maximum="1" Margin="50,0,0,0"></ProgressBar>
+                    <ProgressBar Value="{Binding ProgressValue}" 
+                                 Minimum="0" 
+                                 Maximum="1" 
+                                 Margin="50,0,0,0"
+                                 ></ProgressBar>
                 </DockPanel>
             </Grid>
         </DockPanel>
