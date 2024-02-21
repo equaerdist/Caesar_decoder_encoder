@@ -31,9 +31,15 @@
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0"
+                <DockPanel Grid.Row="0">
+                    <TextBlock Text="Текст" Foreground="{StaticResource text}" DockPanel.Dock="Top"></TextBlock>
+                    <TextBox 
                          MinHeight="100" Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
-                         IsEnabled="{Binding Editable}"></TextBox>
+                        Margin="0,15,0,0"
+                         IsEnabled="{Binding Editable}">
+                    </TextBox>
+                </DockPanel>
+               
                 <Grid  Grid.Row="1" 
                     Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
@@ -42,7 +48,8 @@
                     </Grid.ColumnDefinitions>
                     <DockPanel Grid.Column="0">
                         <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
-                        <TextBox Margin="20,0,0,0" >
+                        <TextBox Margin="20,0,0,0" 
+                                 VerticalContentAlignment="Center">
                             <TextBox.Text>
                                 <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
                                 </Binding>
@@ -50,21 +57,33 @@
                         </TextBox>
                     </DockPanel>
                     <GridSplitter></GridSplitter>
-                    <ComboBox Grid.Column="1" Margin="40,0,0,0"
+                    <DockPanel Grid.Column="1" Margin="40,0,0,0">
+                        <TextBlock Text="Язык" Foreground="{StaticResource text}"></TextBlock>
+                        <ComboBox 
+                                Margin="20,0,0,0"
                               ItemsSource="{Binding Languages}" 
                               SelectedItem="{Binding SelectedLanguage}" 
                               Foreground="{StaticResource main}"></ComboBox>
+                    </DockPanel>
                 </Grid>
-               
-                <StackPanel Orientation="Horizontal" 
-                            Grid.Row="2" 
-                            Margin="0,20,0,0">
-                    <Button Command="{Binding Encode}" CommandParameter="positive">Зашифровать</Button>
+
+                <WrapPanel Orientation="Horizontal" 
+                            Grid.Row="2">
                     <Button Command="{Binding Encode}"
+                            CommandParameter="positive"
+                            Margin="0,20,0,0">Зашифровать</Button>
+                    <StackPanel Width="20"></StackPanel>
+                    <Button Command="{Binding Encode}"
+                            Margin="0,20,0,0"
                             CommandParameter="negative"
-                            Margin="20,0,0,0">Расшифровать</Button>
-                    <Button Margin="20,0,0,0" Command="{Binding ShowPrevious}">Показать предыдущее</Button>
-                </StackPanel>
+                            >Расшифровать</Button>
+                    <StackPanel Width="20"></StackPanel>
+                    <Button Command="{Binding ShowPrevious}"
+                            Margin="0,20,0,0">Показать предыдущее</Button>
+                    <StackPanel Width="20"></StackPanel>
+                    <Button Content="Открыть дешифратор"
+                            Margin="0,20,0,0"></Button>
+                </WrapPanel>
                 <DockPanel Grid.Row="4"
                            Margin="0,20,0,0"
                            Style="{StaticResource progress_bar}"
