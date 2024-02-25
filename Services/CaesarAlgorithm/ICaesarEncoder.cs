@@ -11,6 +11,8 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
 {
     public interface ICaesarCipher
     {
+        int RussianAlphabetPower { get; }
+        int EnglishAlphabetPower { get; }
         Task<string> EncodeAsync(string content, BigInteger key, Language language, 
             IProgress<double> progress, CancellationToken token = default);
         Task<string> DecodeAsync(string content, out BigInteger key, Language language, 

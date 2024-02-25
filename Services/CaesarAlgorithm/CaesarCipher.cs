@@ -13,6 +13,10 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
 {
     public class CaesarCipher : ICaesarCipher
     {
+        public int RussianAlphabetPower => 32;
+
+        public int EnglishAlphabetPower => 26;
+
         public Task<string> DecodeAsync(string content, out BigInteger key, Language language, 
             IProgress<double> progress, CancellationToken token = default)
         {
@@ -45,7 +49,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                         var russian = 'а';
                         var english = 'a';
                         int alphabetStart = language == Language.Russian ? (int)russian : (int)english;
-                        int alphabetSize = language == Language.Russian ? 32 : 26;
+                        int alphabetSize = language == Language.Russian ? RussianAlphabetPower : EnglishAlphabetPower;
                         var aread = (ch - alphabetStart + key);
                         char encryptedChar = (char)((Mod(aread, alphabetSize) + alphabetStart));
                         if (upper)

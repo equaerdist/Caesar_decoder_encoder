@@ -22,7 +22,8 @@ namespace Caesar_decoder_encoder.ViewModels
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
-       
+		private Language ParseLanguage() =>
+			SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
         private double _progressValue;
         #region Редактируема
         private bool _editable = true;
@@ -56,6 +57,20 @@ namespace Caesar_decoder_encoder.ViewModels
         #region Зашифровать
         public ICommand Encode { get; set; }
 		private bool CanEncodeExecuted(object? p) => true;
+		private bool ValidateContent(out string errorMessage)
+		{
+            if (!CheckContent(out errorMessage))
+            {
+                _dialogs.ShowError(errorMessage);
+				return false;
+            }
+            if (!CheckKey(out errorMessage))
+            {
+                _dialogs.ShowError(errorMessage);
+				return false;
+            }
+			return true;
+        }
         #region валидация
         private bool CheckContent(out string message)
 		{
@@ -88,20 +103,11 @@ namespace Caesar_decoder_encoder.ViewModels
 				var multiply = (string)p;
 				var multiplier = multiply == "positive" ? 1 : -1;
 				string errorMessage = string.Empty;
-				if(!CheckContent(out errorMessage))
-				{
-					_dialogs.ShowError(errorMessage);
-					return;
-				}
-				if(!CheckKey(out errorMessage))
-				{
-					_dialogs.ShowError(errorMessage);
-					return;
-				}
+				if (!ValidateContent(out errorMessage)) return;
                 var key = BigInteger.Parse(Key) * multiplier;
 				Editable = false;
                 _tokenSource = new CancellationTokenSource();
-                var language = SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
+                var language = ParseLanguage();
                 var progress = new Progress<double>(v => ProgressValue = v);
                 string result = await _cipher.EncodeAsync(Content, key, language, progress, _tokenSource.Token);
                 _previous.Add(Content);
@@ -157,8 +163,27 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanShowPreviousExecuted(object? p) => _previous.Count >= 1;
         #endregion
+        #region команда открытия окна дешифровки
+        public ICommand OpenDecoderCommand { get; }
+		private void OnOpenDecoderExecuted(object? p)
+		{
+			int decodedKey = 0;
+			var language = ParseLanguage();
+			string errorMessage = string.Empty;
+			if (!ValidateContent(out errorMessage)) return;
+			if (_dialogs.ShowDecodeWindow(ref _content, language, ref decodedKey))
+			{
+				var message = $"Ваш текст расшифрован. Ключ {decodedKey}";
+				Key = (decodedKey * -1).ToString();
+				_dialogs.ShowInfo(message);
+				OnPropertyChanged(nameof(Content));
+			}
+		}
+		private bool CanOpenDecoderExecuted(object? p) => true;
+        #endregion
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs)
 		{
+			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
 			Languages = new() { SelectedLanguage, "English" };

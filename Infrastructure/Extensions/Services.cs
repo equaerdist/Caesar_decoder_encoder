@@ -16,6 +16,7 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
         {
             return services.AddSingleton<ICaesarCipher, CaesarCipher>()
                 .AddSingleton<EncoderViewModel>()
+                .AddTransient<DecoderViewModel>()
                 .AddSingleton<IUserDialogs, UserDialogs>();
         }
     }
