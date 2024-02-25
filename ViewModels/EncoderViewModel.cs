@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -181,8 +182,45 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanOpenDecoderExecuted(object? p) => true;
         #endregion
+        #region команда выгрузки из файла
+        public ICommand LoadContentCommand { get; }
+		private async void OnLoadContentExecuted(object? p)
+		{
+			string fileName = string.Empty;
+			string filter = "Текстовые файлы (*.txt)|*.txt";
+
+			if (!_dialogs.SelectFile(out fileName, filter))
+				return;
+			try
+			{
+				using var fs = File.OpenRead(fileName);
+				using var streamReader = new StreamReader(fs);
+				var fileContent = await streamReader.ReadToEndAsync();
+				Content = fileContent;
+			}
+			catch(Exception ex)
+			{
+				_dialogs.ShowError($"Произошла ошибка: {ex.Message}");
+			}
+		}
+		private bool CanLoadContentExecuted(object? p) => true;
+        #endregion
+		public ICommand DecodeWithFrequemcyCommand { get; }
+		private async void OnDecodeCommandExecuted(object? p)
+		{
+			string errorMessage = string.Empty;
+			if (!ValidateContent(out errorMessage))
+				return;
+			var progress = new Progress<double>(p => ProgressValue = p);
+			var result = await _cipher.DecodeAsync(Content, ParseLanguage(), progress);
+			_dialogs.ShowInfo("Частотный анализ выполнен. Возможный вариант представлен");
+			Content = result;
+		}
+		private bool CanDecodeCommandExecuted(object? p) => true;
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs)
 		{
+			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
+			LoadContentCommand = new RelayCommand(OnLoadContentExecuted, CanLoadContentExecuted);
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);

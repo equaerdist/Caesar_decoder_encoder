@@ -15,7 +15,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
         int EnglishAlphabetPower { get; }
         Task<string> EncodeAsync(string content, BigInteger key, Language language, 
             IProgress<double> progress, CancellationToken token = default);
-        Task<string> DecodeAsync(string content, out BigInteger key, Language language, 
+        Task<string> DecodeAsync(string content, Language language, 
             IProgress<double> progress, CancellationToken token = default);
     }
 }

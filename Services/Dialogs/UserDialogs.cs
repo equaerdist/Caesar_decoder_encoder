@@ -1,7 +1,9 @@
 ﻿using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.ViewModels;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -11,6 +13,20 @@ namespace Caesar_decoder_encoder.Services.Dialogs
 {
     public class UserDialogs : IUserDialogs
     {
+        public bool SelectFile(out string fileName, string filters)
+        {
+            var dialog = new OpenFileDialog();
+            dialog.InitialDirectory = Directory.GetLogicalDrives().First();
+            dialog.Filter = filters;
+            fileName = string.Empty;
+            if(dialog.ShowDialog() == true)
+            {
+                fileName = dialog.FileName;
+                return true;
+            }
+            return false;
+        }
+
         public bool ShowDecodeWindow(ref string content,Language language, ref int decodedKey)
         {
             var window = new Decoder();

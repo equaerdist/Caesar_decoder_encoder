@@ -33,10 +33,11 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private async Task DecodeAsync()
 		{
-			var progress = new Progress<double>(p => Debug.WriteLine(p));
-			var result = await _cipher.EncodeAsync(StartText, SelectedKey, Language, progress);
+			var progress = new Progress<double>(p => { });
+			var result = await _cipher.EncodeAsync(StartText, SelectedKey, Language, progress).ConfigureAwait(false);
 			Content = result;
 			_decodedContent[SelectedKey] = result;
+			
 		}
 		private List<int> _keys = new() { 0 };
         public List<int> Keys 

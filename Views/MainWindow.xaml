@@ -34,7 +34,9 @@
                 <DockPanel Grid.Row="0">
                     <TextBlock Text="Текст" Foreground="{StaticResource text}" DockPanel.Dock="Top"></TextBlock>
                     <TextBox 
+                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                          MinHeight="100" Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
+                            MaxHeight="200"
                         Margin="0,15,0,0"
                          IsEnabled="{Binding Editable}">
                     </TextBox>
@@ -86,7 +88,11 @@
                             Margin="0,20,0,0"></Button>
                     <StackPanel Width="20"></StackPanel>
                     <Button Content="Загрузить из файла"
-                          
+                            Command="{Binding LoadContentCommand}"
+                            Margin="0,20,0,0"></Button>
+                    <StackPanel Width="20"></StackPanel>
+                    <Button Content="Дешифровка частотным анализом"
+                            Command="{Binding DecodeWithFrequemcyCommand}"
                             Margin="0,20,0,0"></Button>
                 </WrapPanel>
                 <DockPanel Grid.Row="4"

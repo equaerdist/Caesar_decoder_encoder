@@ -13,6 +13,7 @@ namespace Caesar_decoder_encoder.Services.Dialogs
         void ShowError(string message);
         bool ShowDecodeWindow(ref string content, Language language, ref int decodedKey);
         void ShowInfo(string message);
+        bool SelectFile(out string fileName, string filters);
 
     }
 }
