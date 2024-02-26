@@ -1,5 +1,6 @@
 ﻿using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.Services.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

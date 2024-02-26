@@ -1,22 +1,19 @@
 ﻿using Caesar_decoder_encoder.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
+namespace Caesar_decoder_encoder.Services.Encryption
 {
-    public class CaesarCipher : ICaesarCipher
+    public interface IFrequencyAnalyzator
     {
+
         private static readonly double _updateFrequency = 0.01;
         #region частота русских букв
-        private readonly Dictionary<char, double> _rusFrequency =
+        private static readonly Dictionary<char, double> _rusFrequency =
             new Dictionary<char, double>()
             {
                 {'а', 8.01},
@@ -55,7 +52,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
             }.OrderByDescending(p => p.Value).ToDictionary(p => p.Key, p => p.Value);
         #endregion
         #region частота английсских букв
-        private readonly Dictionary<char, double> _englishFrequency = new()
+        private static readonly Dictionary<char, double> _englishFrequency = new()
         {
             {'e', 12.7},
             {'t', 9.06},
@@ -85,11 +82,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
             {'z', 0.05}
         };
         #endregion
-        public int RussianAlphabetPower => 32;
-
-        public int EnglishAlphabetPower => 26;
-
-        public async Task<string> DecodeAsync(string content, Language language, 
+        public async Task<string> GetDecodeAsync(string content, Language language,
             IProgress<double> progress, CancellationToken token = default)
         {
             return await Task.Run(() =>
@@ -97,7 +90,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                 var lastPercent = 0d;
                 var contentFrequency = new Dictionary<char, double>();
                 var lengthWithLetters = 0;
-                for(int i=0;i < content.Length; i++)
+                for (int i = 0; i < content.Length; i++)
                 {
                     var letter = content[i];
                     if (!(Alphabet.IsRussianLetter(letter) || Alphabet.IsEnglishLetter(letter)))
@@ -109,7 +102,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                     else
                         contentFrequency[charLetter]++;
                     var currentPercent = (double)i / content.Length / 2;
-                    if(currentPercent - lastPercent > _updateFrequency)
+                    if (currentPercent - lastPercent > _updateFrequency)
                     {
                         progress.Report(currentPercent);
                         lastPercent = currentPercent;
@@ -123,7 +116,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                 var alphabetDict = language == Language.Russian ? _rusFrequency : _englishFrequency;
                 var decodeDictionary = contentFrequency.Zip(alphabetDict).ToDictionary(t => t.First.Key, t => t.Second.Key);
                 var result = new StringBuilder();
-                for(int i=0; i < content.Length; i++)
+                for (int i = 0; i < content.Length; i++)
                 {
                     var letter = content[i];
 
@@ -149,57 +142,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                 progress.Report(1);
                 return result.ToString();
             });
-            
-        }
-        private static BigInteger Mod(BigInteger value, int div) 
-        {
-            var result = value % div;
-            if (result < 0)
-            {
-                result += div;
-                result %= div;
-            }
-            return result;
-        }
-        public async Task<string> EncodeAsync(string content, BigInteger key, Language language, 
-            IProgress<double> progress, CancellationToken token = default)
-        {
-            return await Task.Run(() =>
-            {
-                StringBuilder encryptedText = new StringBuilder();
-                var lastPercent = 0d;
-                for(int i=0; i < content.Length;i++)
-                {
-                    var ch = content[i];
-                    var upper = char.IsUpper(ch);
-                    ch = char.ToLower(ch);
-                    if (char.IsLetter(ch))
-                    {
-                        var russian = 'а';
-                        var english = 'a';
-                        int alphabetStart = language == Language.Russian ? (int)russian : (int)english;
-                        int alphabetSize = language == Language.Russian ? RussianAlphabetPower : EnglishAlphabetPower;
-                        var aread = (ch - alphabetStart + key);
-                        char encryptedChar = (char)((Mod(aread, alphabetSize) + alphabetStart));
-                        if (upper)
-                            encryptedChar = char.ToUpper(encryptedChar);
-                        encryptedText.Append(encryptedChar);
-                    }
-                    else
-                    {
-                        encryptedText.Append(ch);
-                    }
-                    var current = (double)i / content.Length;
-                    if(current - lastPercent > _updateFrequency)
-                    {
-                        progress.Report(current);
-                        lastPercent = current;
-                    }
 
-                }
-                progress.Report(1);
-                return encryptedText.ToString();
-            }, token);
         }
     }
 }

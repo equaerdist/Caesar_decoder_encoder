@@ -3,6 +3,8 @@ using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.Services;
 using Caesar_decoder_encoder.Services.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Dialogs;
+using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -23,8 +26,19 @@ namespace Caesar_decoder_encoder.ViewModels
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
-		private Language ParseLanguage() =>
-			SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
+
+		#region Шифр
+		private Cipher ParseCipher() => SelectdCipher.Equals("Виженер") ? Cipher.Vigenere : Cipher.Caesar;
+		private string _selectedCipher = "Цезарь";
+
+		public string SelectdCipher
+		{
+			get { return _selectedCipher; }
+			set => Set(ref _selectedCipher, value);
+		}
+        public ObservableCollection<string> Ciphers { get; set; }
+        #endregion
+
         private double _progressValue;
 		public double ProgressValue
 		{
@@ -85,14 +99,28 @@ namespace Caesar_decoder_encoder.ViewModels
         }
 		private bool CheckKey(out string message)
 		{
-			message = string.Empty;
-            string pattern = @"^-?\d+$";
-            if (!Regex.IsMatch(Key, pattern))
+			if (SelectdCipher == "Цезарь")
 			{
-				message = "Число должно быть целым";
-				return false;
-			}         
-			return true;
+				message = string.Empty;
+				string pattern = @"^-?\d+$";
+				if (!Regex.IsMatch(Key, pattern))
+				{
+					message = "Число должно быть целым";
+					return false;
+				}
+				return true;
+			}
+			else if(SelectdCipher == "Виженер")
+			{
+				message = "Ключ содержит буквы другой раскладки";
+				if (SelectedLanguage == "Russian" && Key.Any(c => !Alphabet.IsRussianLetter(c)))
+					return false;
+				else if (SelectedLanguage == "English" && Key.Any(c => !Alphabet.IsEnglishLetter(c)))
+					return false;
+				return true;
+			}
+			else
+				throw new ArgumentException(nameof(SelectdCipher));
         }
         #endregion
         private async void OnEncodeExecuted(object? p)
@@ -101,16 +129,31 @@ namespace Caesar_decoder_encoder.ViewModels
 			{
 				if (!(p is string))
 					throw new ArgumentException();
-				var multiply = (string)p;
-				var multiplier = multiply == "positive" ? 1 : -1;
-				string errorMessage = string.Empty;
-				if (!ValidateContent(out errorMessage)) return;
-                var key = BigInteger.Parse(Key) * multiplier;
-				Editable = false;
-                _tokenSource = new CancellationTokenSource();
+                var multiply = (string)p;
+                string errorMessage = string.Empty;
+                if (!ValidateContent(out errorMessage)) return;
+                string result = string.Empty;
                 var language = ParseLanguage();
-                var progress = new Progress<double>(v =>  ProgressValue = v);
-                string result = await _cipher.EncodeAsync(Content, key, language, progress, _tokenSource.Token);
+                var progress = new Progress<double>(v => ProgressValue = v);
+                _tokenSource = new CancellationTokenSource();
+                Editable = false;
+				if (SelectdCipher == "Цезарь")
+				{
+					var key = BigInteger.Parse(Key);
+					Func<string, BigInteger, Language,
+						IProgress<double>, CancellationToken, Task<string>> action =
+						multiply == "positive" ? _cipher.EncodeAsync : _cipher.DecodeAsync;
+					result = await action(Content, key, language, progress, _tokenSource.Token);
+				}
+				else if (SelectdCipher == "Виженер")
+				{
+					Func<string, string, Language,
+					   IProgress<double>, CancellationToken, Task<string>> action =
+					   multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
+					result = await action(Content, Key, language, progress, _tokenSource.Token);
+				}
+				else
+					throw new ArgumentException(nameof(SelectdCipher));
                 _previous.Add(Content);
                 Content = result;
             }
@@ -143,6 +186,8 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
         #endregion
         #region выбранный язык
+        private Language ParseLanguage() =>
+            SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
         private string _language = "Russian";
 
 		public string SelectedLanguage
@@ -150,10 +195,13 @@ namespace Caesar_decoder_encoder.ViewModels
 			get => _language;
 			set => Set(ref _language, value);
 		}
-		#endregion
 		public ObservableCollection<string> Languages { get; set; }
+        #endregion
+        #region сервисы
         private readonly ICaesarCipher _cipher;
+        private readonly IVigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
+        #endregion
         #region команда возвращения
         public ICommand ShowPrevious { get; }
 		private void OnShowPreviousExecuted(object? p)
@@ -205,27 +253,31 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanLoadContentExecuted(object? p) => true;
         #endregion
-		public ICommand DecodeWithFrequemcyCommand { get; }
+        #region команда дешифрования путем частотного анализа
+        public ICommand DecodeWithFrequemcyCommand { get; }
 		private async void OnDecodeCommandExecuted(object? p)
 		{
 			string errorMessage = string.Empty;
 			if (!ValidateContent(out errorMessage))
 				return;
 			var progress = new Progress<double>(p => ProgressValue = p);
-			var result = await _cipher.DecodeAsync(Content, ParseLanguage(), progress);
+			var result = await _cipher.GetDecodeAsync(Content, ParseLanguage(), progress);
 			_dialogs.ShowInfo("Частотный анализ выполнен. Возможный вариант представлен");
 			Content = result;
 		}
 		private bool CanDecodeCommandExecuted(object? p) => true;
-        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs)
+        #endregion
+        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, IVigenereCipher vigCipher)
 		{
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
 			LoadContentCommand = new RelayCommand(OnLoadContentExecuted, CanLoadContentExecuted);
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
+			Ciphers = new() { SelectdCipher, "Виженер" };
 			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
+			_vigCipher = vigCipher;
 			_dialogs = dialogs;
 		}
 	}

@@ -7,15 +7,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
+namespace Caesar_decoder_encoder.Services.Encryption
 {
-    public interface ICaesarCipher
+    public interface IWordEncryptor
     {
-        int RussianAlphabetPower { get; }
-        int EnglishAlphabetPower { get; }
-        Task<string> EncodeAsync(string content, BigInteger key, Language language, 
+        static int RussianAlphabetPower { get; }
+        static int EnglishAlphabetPower { get; }
+        Task<string> EncodeAsync(string content, string key, Language language,
             IProgress<double> progress, CancellationToken token = default);
-        Task<string> DecodeAsync(string content, Language language, 
+        Task<string> DecodeAsync(string content, string key, Language language,
             IProgress<double> progress, CancellationToken token = default);
     }
 }

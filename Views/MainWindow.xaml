@@ -47,6 +47,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <DockPanel Grid.Column="0">
                         <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
@@ -65,6 +66,14 @@
                                 Margin="20,0,0,0"
                               ItemsSource="{Binding Languages}" 
                               SelectedItem="{Binding SelectedLanguage}" 
+                              Foreground="{StaticResource main}"></ComboBox>
+                    </DockPanel>
+                    <DockPanel Grid.Column="2" Margin="40,0,0,0">
+                        <TextBlock Text="Шифр" Foreground="{StaticResource text}"></TextBlock>
+                        <ComboBox 
+                                Margin="20,0,0,0"
+                              ItemsSource="{Binding Ciphers}" 
+                              SelectedItem="{Binding SelectdCipher}" 
                               Foreground="{StaticResource main}"></ComboBox>
                     </DockPanel>
                 </Grid>
