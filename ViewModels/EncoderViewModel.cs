@@ -26,6 +26,11 @@ namespace Caesar_decoder_encoder.ViewModels
 		private Language ParseLanguage() =>
 			SelectedLanguage.Equals("Russian") ? Language.Russian : Language.English;
         private double _progressValue;
+		public double ProgressValue
+		{
+			get { return _progressValue; }
+			set => Set(ref _progressValue, value);
+		}
         #region Редактируема
         private bool _editable = true;
 
@@ -35,11 +40,6 @@ namespace Caesar_decoder_encoder.ViewModels
 			set => Set(ref _editable, value);
 		}
 
-		public double ProgressValue
-		{
-			get { return _progressValue; }
-			set => Set(ref _progressValue, value);
-		}
         #endregion
 
         #region содержание
@@ -109,7 +109,7 @@ namespace Caesar_decoder_encoder.ViewModels
 				Editable = false;
                 _tokenSource = new CancellationTokenSource();
                 var language = ParseLanguage();
-                var progress = new Progress<double>(v => ProgressValue = v);
+                var progress = new Progress<double>(v =>  ProgressValue = v);
                 string result = await _cipher.EncodeAsync(Content, key, language, progress, _tokenSource.Token);
                 _previous.Add(Content);
                 Content = result;

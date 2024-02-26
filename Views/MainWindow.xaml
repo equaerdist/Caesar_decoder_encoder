@@ -97,11 +97,11 @@
                 </WrapPanel>
                 <DockPanel Grid.Row="4"
                            Margin="0,20,0,0"
-                           Style="{StaticResource progress_bar}"
+                            Style="{StaticResource progress_bar}"
                            >
-                    <TextBlock Text="{Binding ProgressValue, StringFormat=' {0}'}"
+                    <TextBlock Text="{Binding ProgressValue, StringFormat='00%'}"
                                Foreground="{StaticResource text}"
-                               DockPanel.Dock="Left" Width="20"></TextBlock>
+                               DockPanel.Dock="Left" Width="50"></TextBlock>
                     <ProgressBar Value="{Binding ProgressValue}" 
                                  Minimum="0" 
                                  Maximum="1" 

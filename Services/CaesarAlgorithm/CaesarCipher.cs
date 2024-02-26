@@ -1,6 +1,7 @@
 ﻿using Caesar_decoder_encoder.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -13,6 +14,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
 {
     public class CaesarCipher : ICaesarCipher
     {
+        private static readonly double _updateFrequency = 0.01;
         #region частота русских букв
         private readonly Dictionary<char, double> _rusFrequency =
             new Dictionary<char, double>()
@@ -92,6 +94,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
         {
             return await Task.Run(() =>
             {
+                var lastPercent = 0d;
                 var contentFrequency = new Dictionary<char, double>();
                 var lengthWithLetters = 0;
                 for(int i=0;i < content.Length; i++)
@@ -105,9 +108,14 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                         contentFrequency.Add(charLetter, 0);
                     else
                         contentFrequency[charLetter]++;
-                    if(i % 4 == 0)
-                        progress.Report(i / content.Length / 2);
+                    var currentPercent = (double)i / content.Length / 2;
+                    if(currentPercent - lastPercent > _updateFrequency)
+                    {
+                        progress.Report(currentPercent);
+                        lastPercent = currentPercent;
+                    }
                 }
+                lastPercent = 0d;
                 contentFrequency = contentFrequency
                     .Select(p => (p.Key, p.Value / lengthWithLetters * 100))
                     .OrderByDescending(p => p.Item2)
@@ -130,9 +138,15 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                     if (isUp)
                         decodedChar = char.ToUpper(decodedChar);
                     result.Append(decodedChar);
-                    if(i % 4 == 0)
-                        progress.Report(i / content.Length);
+                    var currentPercent = (double)i / content.Length / 2;
+                    if (currentPercent - lastPercent > _updateFrequency)
+                    {
+                        var resultative = currentPercent + 0.5;
+                        progress.Report(resultative);
+                        lastPercent = currentPercent;
+                    }
                 }
+                progress.Report(1);
                 return result.ToString();
             });
             
@@ -153,7 +167,7 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
             return await Task.Run(() =>
             {
                 StringBuilder encryptedText = new StringBuilder();
-
+                var lastPercent = 0d;
                 for(int i=0; i < content.Length;i++)
                 {
                     var ch = content[i];
@@ -175,9 +189,15 @@ namespace Caesar_decoder_encoder.Services.CaesarAlgorithm
                     {
                         encryptedText.Append(ch);
                     }
-                    progress.Report(i / content.Length);
-                }
+                    var current = (double)i / content.Length;
+                    if(current - lastPercent > _updateFrequency)
+                    {
+                        progress.Report(current);
+                        lastPercent = current;
+                    }
 
+                }
+                progress.Report(1);
                 return encryptedText.ToString();
             }, token);
         }
