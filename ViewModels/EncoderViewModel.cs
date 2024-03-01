@@ -154,6 +154,13 @@ namespace Caesar_decoder_encoder.ViewModels
 					   multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
 					result = await action(Content, Key, language, progress, _tokenSource.Token);
 				}
+				else if(SelectdCipher == "Гронсфельд")
+				{
+                    Func<string, string, Language,
+                       IProgress<double>, CancellationToken, Task<string>> action =
+                       multiply == "positive" ? _gronCipher.EncodeAsync : _gronCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
 				else
 					throw new ArgumentException(nameof(SelectdCipher));
                 _previous.Add(Content);
@@ -203,7 +210,7 @@ namespace Caesar_decoder_encoder.ViewModels
         private readonly ICaesarCipher _cipher;
         private readonly IFrequencyAnalyzator _analyzator;
         private readonly IGronsfeldCipher _gronCipher;
-        private readonly IVigenereCipher _vigCipher;
+        private readonly VigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
         #endregion
         #region команда возвращения
@@ -272,7 +279,7 @@ namespace Caesar_decoder_encoder.ViewModels
 		private bool CanDecodeCommandExecuted(object? p) => true;
         #endregion
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
-			IVigenereCipher vigCipher, 
+			VigenereCipher vigCipher, 
 			IGronsfeldCipher gronCipher, 
 			IFrequencyAnalyzator analyzator)
 		{

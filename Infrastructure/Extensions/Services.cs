@@ -21,7 +21,7 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
             return services.AddSingleton<ICaesarCipher, CaesarCipher>()
                 .AddSingleton<EncoderViewModel>()
                 .AddTransient<DecoderViewModel>()
-                .AddSingleton<IVigenereCipher, VigenereAlgorithm>()
+                .AddSingleton<VigenereCipher, VigenereAlgorithm>()
                 .AddSingleton<IUserDialogs, UserDialogs>()
                 .AddSingleton<IGronsfeldCipher, GronsfeldCipher>()
                 .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>();
