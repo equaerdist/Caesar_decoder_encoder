@@ -4,6 +4,8 @@ using Caesar_decoder_encoder.Services;
 using Caesar_decoder_encoder.Services.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Dialogs;
 using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
+using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using System;
 using System.Collections.Generic;
@@ -101,14 +103,9 @@ namespace Caesar_decoder_encoder.ViewModels
 		{
 			if (SelectdCipher == "Цезарь")
 			{
-				message = string.Empty;
-				string pattern = @"^-?\d+$";
-				if (!Regex.IsMatch(Key, pattern))
-				{
-					message = "Число должно быть целым";
-					return false;
-				}
-				return true;
+                message = "Число должно быть целым";
+                string pattern = @"^-?\d+$";
+				return Regex.IsMatch(Key, pattern);
 			}
 			else if(SelectdCipher == "Виженер")
 			{
@@ -118,6 +115,11 @@ namespace Caesar_decoder_encoder.ViewModels
 				else if (SelectedLanguage == "English" && Key.Any(c => !Alphabet.IsEnglishLetter(c)))
 					return false;
 				return true;
+			}
+			else if(SelectdCipher == "Гронсфельд")
+			{
+				message = "Число должно быть целым и неотрицательным";
+				return Regex.IsMatch(Key, @"^\d+$");
 			}
 			else
 				throw new ArgumentException(nameof(SelectdCipher));
@@ -199,6 +201,8 @@ namespace Caesar_decoder_encoder.ViewModels
         #endregion
         #region сервисы
         private readonly ICaesarCipher _cipher;
+        private readonly IFrequencyAnalyzator _analyzator;
+        private readonly IGronsfeldCipher _gronCipher;
         private readonly IVigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
         #endregion
@@ -260,23 +264,28 @@ namespace Caesar_decoder_encoder.ViewModels
 			string errorMessage = string.Empty;
 			if (!ValidateContent(out errorMessage))
 				return;
-			var progress = new Progress<double>(p => ProgressValue = p);
-			var result = await _cipher.GetDecodeAsync(Content, ParseLanguage(), progress);
+			var progress = new Progress<(string,double)>(p => ProgressValue = p.Item2);
+			var result = await _analyzator.GetDecodeAsync(Content, ParseLanguage(), progress);
 			_dialogs.ShowInfo("Частотный анализ выполнен. Возможный вариант представлен");
 			Content = result;
 		}
 		private bool CanDecodeCommandExecuted(object? p) => true;
         #endregion
-        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, IVigenereCipher vigCipher)
+        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
+			IVigenereCipher vigCipher, 
+			IGronsfeldCipher gronCipher, 
+			IFrequencyAnalyzator analyzator)
 		{
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
 			LoadContentCommand = new RelayCommand(OnLoadContentExecuted, CanLoadContentExecuted);
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
-			Ciphers = new() { SelectdCipher, "Виженер" };
+			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд" };
 			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
+			_analyzator = analyzator;
+			_gronCipher = gronCipher;
 			_vigCipher = vigCipher;
 			_dialogs = dialogs;
 		}
