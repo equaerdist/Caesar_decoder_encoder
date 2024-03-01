@@ -74,7 +74,60 @@ namespace Caesar_decoder_encoder.ViewModels
         #region Зашифровать
         public ICommand Encode { get; set; }
 		private bool CanEncodeExecuted(object? p) => true;
-		private bool ValidateContent(out string errorMessage)
+        private async void OnEncodeExecuted(object? p)
+        {
+            try
+            {
+                if (!(p is string))
+                    throw new ArgumentException();
+                var multiply = (string)p;
+                string errorMessage = string.Empty;
+                if (!ValidateContent(out errorMessage)) return;
+                string result = string.Empty;
+                var language = ParseLanguage();
+                var progress = new Progress<double>(v => ProgressValue = v);
+                _tokenSource = new CancellationTokenSource();
+                Editable = false;
+                if (SelectdCipher == "Цезарь")
+                {
+                    var key = BigInteger.Parse(Key);
+                    Func<string, BigInteger, Language,
+                        IProgress<double>, CancellationToken, Task<string>> action =
+                        multiply == "positive" ? _cipher.EncodeAsync : _cipher.DecodeAsync;
+                    result = await action(Content, key, language, progress, _tokenSource.Token);
+                }
+                else if (SelectdCipher == "Виженер")
+                {
+                    Func<string, string, Language,
+                       IProgress<double>, CancellationToken, Task<string>> action =
+                       multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
+                else if (SelectdCipher == "Гронсфельд")
+                {
+                    Func<string, string, Language,
+                       IProgress<double>, CancellationToken, Task<string>> action =
+                       multiply == "positive" ? _gronCipher.EncodeAsync : _gronCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
+                else
+                    throw new ArgumentException(nameof(SelectdCipher));
+                _previous.Add(Content);
+                Content = result;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _dialogs.ShowError(ex.Message);
+            }
+            finally
+            {
+                Editable = true;
+                _tokenSource?.Dispose();
+                _tokenSource = null;
+            }
+        }
+        private bool ValidateContent(out string errorMessage)
 		{
             if (!CheckContent(out errorMessage))
             {
@@ -88,6 +141,7 @@ namespace Caesar_decoder_encoder.ViewModels
             }
 			return true;
         }
+        #endregion
         #region валидация
         private bool CheckContent(out string message)
 		{
@@ -125,61 +179,7 @@ namespace Caesar_decoder_encoder.ViewModels
 				throw new ArgumentException(nameof(SelectdCipher));
         }
         #endregion
-        private async void OnEncodeExecuted(object? p)
-		{
-			try
-			{
-				if (!(p is string))
-					throw new ArgumentException();
-                var multiply = (string)p;
-                string errorMessage = string.Empty;
-                if (!ValidateContent(out errorMessage)) return;
-                string result = string.Empty;
-                var language = ParseLanguage();
-                var progress = new Progress<double>(v => ProgressValue = v);
-                _tokenSource = new CancellationTokenSource();
-                Editable = false;
-				if (SelectdCipher == "Цезарь")
-				{
-					var key = BigInteger.Parse(Key);
-					Func<string, BigInteger, Language,
-						IProgress<double>, CancellationToken, Task<string>> action =
-						multiply == "positive" ? _cipher.EncodeAsync : _cipher.DecodeAsync;
-					result = await action(Content, key, language, progress, _tokenSource.Token);
-				}
-				else if (SelectdCipher == "Виженер")
-				{
-					Func<string, string, Language,
-					   IProgress<double>, CancellationToken, Task<string>> action =
-					   multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
-					result = await action(Content, Key, language, progress, _tokenSource.Token);
-				}
-				else if(SelectdCipher == "Гронсфельд")
-				{
-                    Func<string, string, Language,
-                       IProgress<double>, CancellationToken, Task<string>> action =
-                       multiply == "positive" ? _gronCipher.EncodeAsync : _gronCipher.DecodeAsync;
-                    result = await action(Content, Key, language, progress, _tokenSource.Token);
-                }
-				else
-					throw new ArgumentException(nameof(SelectdCipher));
-                _previous.Add(Content);
-                Content = result;
-            }
-			catch(Exception ex)
-			{
-				Debug.WriteLine(ex.Message);
-				_dialogs.ShowError(ex.Message);
-			}
-			finally
-			{
-				Editable = true;
-				_tokenSource?.Dispose();
-				_tokenSource = null;
-			}
-		}
-
-		#endregion
+       
 		#region ключ
 		private string _key = string.Empty;
 
@@ -209,7 +209,7 @@ namespace Caesar_decoder_encoder.ViewModels
         #region сервисы
         private readonly ICaesarCipher _cipher;
         private readonly IFrequencyAnalyzator _analyzator;
-        private readonly IGronsfeldCipher _gronCipher;
+        private readonly GronsfeldCipher _gronCipher;
         private readonly VigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
         #endregion
@@ -280,7 +280,7 @@ namespace Caesar_decoder_encoder.ViewModels
         #endregion
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
 			VigenereCipher vigCipher, 
-			IGronsfeldCipher gronCipher, 
+			GronsfeldCipher gronCipher, 
 			IFrequencyAnalyzator analyzator)
 		{
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);

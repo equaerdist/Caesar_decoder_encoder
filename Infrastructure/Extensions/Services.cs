@@ -23,7 +23,7 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
                 .AddTransient<DecoderViewModel>()
                 .AddSingleton<VigenereCipher, VigenereAlgorithm>()
                 .AddSingleton<IUserDialogs, UserDialogs>()
-                .AddSingleton<IGronsfeldCipher, GronsfeldCipher>()
+                .AddSingleton<GronsfeldCipher, GronsfeldAlgorithm>()
                 .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>();
         }
     }

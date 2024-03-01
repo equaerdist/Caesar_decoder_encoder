@@ -10,6 +10,16 @@ namespace Caesar_decoder_encoder.Services.Encryption
 {
     public abstract class AlphabetBasedEncryptor : IWordEncryptor
     {
+        public static int Mod(int value, int div)
+        {
+            var result = value % div;
+            if (result < 0)
+            {
+                result += div;
+                result %= div;
+            }
+            return result;
+        }
         public static int RussianAlphabetPower => 32;
 
         public static int EnglishAlphabetPower => 26;
