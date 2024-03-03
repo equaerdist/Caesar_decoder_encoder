@@ -1,25 +1,28 @@
 ﻿using Caesar_decoder_encoder.Infrastructure.Commands;
 using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.Services;
-using Caesar_decoder_encoder.Services.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Dialogs;
 using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
+using OxyPlot.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata;
-using System.Text;
+
+
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Caesar_decoder_encoder.ViewModels
@@ -28,6 +31,15 @@ namespace Caesar_decoder_encoder.ViewModels
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
+		private PlotModel? _model;
+
+		public PlotModel? Model
+		{
+			get => _model;
+			set => Set(ref _model, value);
+		}
+
+
 
 		#region Шифр
 		private Cipher ParseCipher() => SelectdCipher.Equals("Виженер") ? Cipher.Vigenere : Cipher.Caesar;
@@ -278,11 +290,96 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanDecodeCommandExecuted(object? p) => true;
         #endregion
+		private void SetPlot(ImmutableDictionary<char, int> points)
+		{
+			if (points.Count == 0)
+				return;
+			var model = new PlotModel() 
+			{ 
+				Title = "Частотный анализ",
+				PlotAreaBorderColor = OxyColors.White,
+				TitleColor = OxyColors.White,
+				TextColor = OxyColors.White
+			};
+			var linBarSeries = new OxyPlot.Series.LinearBarSeries()
+			{
+				FillColor = OxyColor.FromArgb(69, 255, 178, 102),
+				StrokeThickness = 1,
+				StrokeColor = OxyColor.FromArgb(255, 255, 178, 0),
+                TextColor = OxyColors.White,
+            };
+			var categoryAxis = new OxyPlot.Axes.CategoryAxis
+            {
+				TickStyle = TickStyle.Outside,
+                Position = AxisPosition.Bottom,
+                Title = "Буква",
+				TitleFontSize = 15,
+				TicklineColor = OxyColors.White,
+				TextColor = OxyColors.White,
+				TitleColor = OxyColors.White,
+				MajorGridlineColor = OxyColors.White,
+				AxislineColor = OxyColors.White,
+				AxisTitleDistance = 8
+			};
+            var valueAxis = new OxyPlot.Axes.LinearAxis 
+			{ 
+				Position = AxisPosition.Left, 
+				MinimumPadding = 0,
+				MaximumPadding = 0.06, 
+				AbsoluteMinimum = 0,
+                TicklineColor = OxyColors.White,
+                TextColor = OxyColors.White,
+                TitleColor = OxyColors.White,
+                MajorGridlineColor = OxyColors.White,
+                AxislineColor = OxyColors.White,
+            };
+            var k = 0;
+			foreach(var pair in points)
+			{
+				linBarSeries.Points.Add(new DataPoint(k++, pair.Value));
+				categoryAxis.Labels.Add(pair.Key.ToString());
+			}
+            model.Axes.Add(categoryAxis);
+			model.Axes.Add(valueAxis);
+			model.Series.Add(linBarSeries);
+			Model = model;
+        }
+		public ICommand FrequencyAnalyzeCommand { get; }
+		private async void OnFrequencyAnalyzeExecute(object? p)
+		{
+			if(!CheckContent(out string errorMessage))
+			{
+				_dialogs.ShowError(errorMessage);
+				return;
+			}
+			try
+			{
+				var progress = new Progress<(string,double)> (p => ProgressValue = p.Item2);
+				_tokenSource = new();
+				var result = await _analyzator.GetFrequencyStats(Content, progress, _tokenSource.Token);
+				var FrequencyStats = result.Frequency;
+				SetPlot(FrequencyStats);
+			}
+			catch(Exception ex)
+			{
+				_dialogs.ShowError(ex.Message);
+			}
+			finally
+			{
+				_tokenSource?.Dispose();
+				_tokenSource = null;
+			}
+		}
+		private bool CanOnFrequencyAnalyzeExecute(object? p)
+		{
+			return true;
+		}
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
 			VigenereCipher vigCipher, 
 			GronsfeldCipher gronCipher, 
 			IFrequencyAnalyzator analyzator)
 		{
+			FrequencyAnalyzeCommand = new RelayCommand(OnFrequencyAnalyzeExecute, CanOnFrequencyAnalyzeExecute);
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
 			LoadContentCommand = new RelayCommand(OnLoadContentExecuted, CanLoadContentExecuted);
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
