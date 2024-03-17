@@ -11,8 +11,6 @@ using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using Caesar_decoder_encoder.Services.KeyBitGenerator;
 using OxyPlot;
 using OxyPlot.Axes;
-using OxyPlot.Series;
-using OxyPlot.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
