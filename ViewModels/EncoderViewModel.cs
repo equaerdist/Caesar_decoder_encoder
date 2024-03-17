@@ -1,23 +1,31 @@
 ﻿using Caesar_decoder_encoder.Infrastructure.Commands;
 using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.Services;
-using Caesar_decoder_encoder.Services.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Dialogs;
+using Caesar_decoder_encoder.Services.Encryption.BitAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
+using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
+using Caesar_decoder_encoder.Services.KeyBitGenerator;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
+using OxyPlot.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata;
-using System.Text;
+
+
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Caesar_decoder_encoder.ViewModels
@@ -26,6 +34,15 @@ namespace Caesar_decoder_encoder.ViewModels
     {
 		private CancellationTokenSource? _tokenSource;
 		private List<string> _previous = new();
+		private PlotModel? _model;
+
+		public PlotModel? Model
+		{
+			get => _model;
+			set => Set(ref _model, value);
+		}
+
+
 
 		#region Шифр
 		private Cipher ParseCipher() => SelectdCipher.Equals("Виженер") ? Cipher.Vigenere : Cipher.Caesar;
@@ -71,8 +88,75 @@ namespace Caesar_decoder_encoder.ViewModels
         #endregion
         #region Зашифровать
         public ICommand Encode { get; set; }
-		private bool CanEncodeExecuted(object? p) => true;
-		private bool ValidateContent(out string errorMessage)
+		private bool CanEncodeExecuted(object? p) => _tokenSource == null;
+        private async void OnEncodeExecuted(object? p)
+        {
+            try
+            {
+                if (!(p is string))
+                    throw new ArgumentException();
+                var multiply = (string)p;
+                string errorMessage = string.Empty;
+                if (!ValidateContent(out errorMessage)) return;
+                string result = string.Empty;
+                var language = ParseLanguage();
+                var progress = new Progress<double>(v => ProgressValue = v);
+                _tokenSource = new CancellationTokenSource();
+                Editable = false;
+                if (SelectdCipher == "Цезарь")
+                {
+                    var key = BigInteger.Parse(Key);
+                    Func<string, BigInteger, Language,
+                        IProgress<double>, CancellationToken, Task<string>> action =
+                        multiply == "positive" ? _cipher.EncodeAsync : _cipher.DecodeAsync;
+                    result = await action(Content, key, language, progress, _tokenSource.Token);
+                }
+                else if (SelectdCipher == "Виженер")
+                {
+                    Func<string, string, Language,
+                       IProgress<double>, CancellationToken, Task<string>> action =
+                       multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
+                else if (SelectdCipher == "Гронсфельд")
+                {
+                    Func<string, string, Language,
+                       IProgress<double>, CancellationToken, Task<string>> action =
+                       multiply == "positive" ? _gronCipher.EncodeAsync : _gronCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
+				else if(SelectdCipher == "Битовый алгоритм")
+				{
+					Func<string, IProgress<double>, CancellationToken, Task<string>> action = 
+						multiply == "positive" ? _bitCipher.EncodeAsync : _bitCipher.DecodeAsync;
+					result = await action(Content, progress, _tokenSource.Token);
+				}
+				else if(SelectdCipher == "Gamma-XOR")
+				{
+                    Func<string, string, Language,
+                     IProgress<double>, CancellationToken, Task<string>> action =
+                     multiply == "positive" ? _gammaCipher.EncodeAsync : _gammaCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
+                else
+                    throw new ArgumentException(nameof(SelectdCipher));
+                _previous.Add(Content);
+                Content = result;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _dialogs.ShowError(ex.Message);
+            }
+            finally
+            {
+                Editable = true;
+                _tokenSource?.Dispose();
+                _tokenSource = null;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+        private bool ValidateContent(out string errorMessage)
 		{
             if (!CheckContent(out errorMessage))
             {
@@ -86,31 +170,38 @@ namespace Caesar_decoder_encoder.ViewModels
             }
 			return true;
         }
+        #endregion
         #region валидация
         private bool CheckContent(out string message)
 		{
 			message = string.Empty;
-            Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
-                    Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
-			if (!Content.Any(validator))
-				return true;
-			message = "Текст содержит символы другой раскладки";
-			return false;
+            if (SelectdCipher != "Gamma-XOR")
+            {
+				if (SelectdCipher == "Битовый алгоритм")
+					return true;
+                Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
+                   Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
+                if (!Content.Any(validator))
+                    return true;
+                message = "Текст содержит символы другой раскладки";
+                return false;
+            }
+           else
+			{
+                message = "Текст должен состоять только из битов";
+                string pattern = "^[01]+$";
+                return (Regex.IsMatch(Content, pattern));
+            }
         }
 		private bool CheckKey(out string message)
 		{
 			if (SelectdCipher == "Цезарь")
 			{
-				message = string.Empty;
+				message = "Число должно быть целым";
 				string pattern = @"^-?\d+$";
-				if (!Regex.IsMatch(Key, pattern))
-				{
-					message = "Число должно быть целым";
-					return false;
-				}
-				return true;
+				return Regex.IsMatch(Key, pattern);
 			}
-			else if(SelectdCipher == "Виженер")
+			else if (SelectdCipher == "Виженер")
 			{
 				message = "Ключ содержит буквы другой раскладки";
 				if (SelectedLanguage == "Russian" && Key.Any(c => !Alphabet.IsRussianLetter(c)))
@@ -119,58 +210,27 @@ namespace Caesar_decoder_encoder.ViewModels
 					return false;
 				return true;
 			}
+			else if (SelectdCipher == "Гронсфельд")
+			{
+				message = "Число должно быть целым и неотрицательным";
+				return Regex.IsMatch(Key, @"^\d+$");
+			}
+			else if (SelectdCipher == "Битовый алгоритм")
+			{
+				message = string.Empty;
+				return true;
+			}
+			else if (SelectdCipher == "Gamma-XOR")
+			{
+				message = "Ключ должен состоять только из битов";
+				string pattern = "^[01]+$";
+				return (Regex.IsMatch(Key, pattern)) ;
+			}
 			else
 				throw new ArgumentException(nameof(SelectdCipher));
         }
         #endregion
-        private async void OnEncodeExecuted(object? p)
-		{
-			try
-			{
-				if (!(p is string))
-					throw new ArgumentException();
-                var multiply = (string)p;
-                string errorMessage = string.Empty;
-                if (!ValidateContent(out errorMessage)) return;
-                string result = string.Empty;
-                var language = ParseLanguage();
-                var progress = new Progress<double>(v => ProgressValue = v);
-                _tokenSource = new CancellationTokenSource();
-                Editable = false;
-				if (SelectdCipher == "Цезарь")
-				{
-					var key = BigInteger.Parse(Key);
-					Func<string, BigInteger, Language,
-						IProgress<double>, CancellationToken, Task<string>> action =
-						multiply == "positive" ? _cipher.EncodeAsync : _cipher.DecodeAsync;
-					result = await action(Content, key, language, progress, _tokenSource.Token);
-				}
-				else if (SelectdCipher == "Виженер")
-				{
-					Func<string, string, Language,
-					   IProgress<double>, CancellationToken, Task<string>> action =
-					   multiply == "positive" ? _vigCipher.EncodeAsync : _vigCipher.DecodeAsync;
-					result = await action(Content, Key, language, progress, _tokenSource.Token);
-				}
-				else
-					throw new ArgumentException(nameof(SelectdCipher));
-                _previous.Add(Content);
-                Content = result;
-            }
-			catch(Exception ex)
-			{
-				Debug.WriteLine(ex.Message);
-				_dialogs.ShowError(ex.Message);
-			}
-			finally
-			{
-				Editable = true;
-				_tokenSource?.Dispose();
-				_tokenSource = null;
-			}
-		}
-
-		#endregion
+       
 		#region ключ
 		private string _key = string.Empty;
 
@@ -199,8 +259,13 @@ namespace Caesar_decoder_encoder.ViewModels
         #endregion
         #region сервисы
         private readonly ICaesarCipher _cipher;
-        private readonly IVigenereCipher _vigCipher;
+        private readonly IFrequencyAnalyzator _analyzator;
+        private readonly GronsfeldCipher _gronCipher;
+        private readonly VigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
+        private readonly IBitCipher _bitCipher;
+        private readonly GammaCipher _gammaCipher;
+        private readonly IKeyBitGenerator _keyGen;
         #endregion
         #region команда возвращения
         public ICommand ShowPrevious { get; }
@@ -218,8 +283,7 @@ namespace Caesar_decoder_encoder.ViewModels
 		{
 			int decodedKey = 0;
 			var language = ParseLanguage();
-			string errorMessage = string.Empty;
-			if (!ValidateContent(out errorMessage)) return;
+			if (!ValidateContent(out var errorMessage)) return;
 			if (_dialogs.ShowDecodeWindow(ref _content, language, ref decodedKey))
 			{
 				var message = $"Ваш текст расшифрован. Ключ {decodedKey}";
@@ -260,25 +324,151 @@ namespace Caesar_decoder_encoder.ViewModels
 			string errorMessage = string.Empty;
 			if (!ValidateContent(out errorMessage))
 				return;
-			var progress = new Progress<double>(p => ProgressValue = p);
-			var result = await _cipher.GetDecodeAsync(Content, ParseLanguage(), progress);
+			var progress = new Progress<(string,double)>(p => ProgressValue = p.Item2);
+			var result = await _analyzator.GetDecodeAsync(Content, ParseLanguage(), progress);
 			_dialogs.ShowInfo("Частотный анализ выполнен. Возможный вариант представлен");
 			Content = result;
 		}
-		private bool CanDecodeCommandExecuted(object? p) => true;
+		private bool CanDecodeCommandExecuted(object? p) => _tokenSource == null;
         #endregion
-        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, IVigenereCipher vigCipher)
+        #region команда частотного анализа
+        private void SetPlot(ImmutableDictionary<char, int> points)
 		{
+			if (points.Count == 0)
+				return;
+			var model = new PlotModel() 
+			{ 
+				Title = "Частотный анализ",
+				PlotAreaBorderColor = OxyColors.White,
+				TitleColor = OxyColors.White,
+				TextColor = OxyColors.White
+			};
+			var linBarSeries = new OxyPlot.Series.LinearBarSeries()
+			{
+				FillColor = OxyColor.FromArgb(69, 255, 178, 102),
+				StrokeThickness = 1,
+				StrokeColor = OxyColor.FromArgb(255, 255, 178, 0),
+                TextColor = OxyColors.White,
+            };
+			var categoryAxis = new OxyPlot.Axes.CategoryAxis
+            {
+				TickStyle = TickStyle.Outside,
+                Position = AxisPosition.Bottom,
+                Title = "Буква",
+				TitleFontSize = 15,
+				TicklineColor = OxyColors.White,
+				TextColor = OxyColors.White,
+				TitleColor = OxyColors.White,
+				MajorGridlineColor = OxyColors.White,
+				AxislineColor = OxyColors.White,
+				AxisTitleDistance = 8
+			};
+            var valueAxis = new OxyPlot.Axes.LinearAxis 
+			{ 
+				Position = AxisPosition.Left, 
+				MinimumPadding = 0,
+				MaximumPadding = 0.06, 
+				AbsoluteMinimum = 0,
+                TicklineColor = OxyColors.White,
+                TextColor = OxyColors.White,
+                TitleColor = OxyColors.White,
+                MajorGridlineColor = OxyColors.White,
+                AxislineColor = OxyColors.White,
+            };
+            var k = 0;
+			foreach(var pair in points)
+			{
+				linBarSeries.Points.Add(new DataPoint(k++, pair.Value));
+				categoryAxis.Labels.Add(pair.Key.ToString());
+			}
+            model.Axes.Add(categoryAxis);
+			model.Axes.Add(valueAxis);
+			model.Series.Add(linBarSeries);
+			Model = model;
+        }
+		public ICommand FrequencyAnalyzeCommand { get; }
+		private async void OnFrequencyAnalyzeExecute(object? p)
+		{
+			if(!CheckContent(out string errorMessage))
+			{
+				_dialogs.ShowError(errorMessage);
+				return;
+			}
+			try
+			{
+				var progress = new Progress<(string,double)> (p => ProgressValue = p.Item2);
+				_tokenSource = new();
+				var result = await _analyzator.GetFrequencyStats(Content, progress, _tokenSource.Token);
+				var FrequencyStats = result.Frequency;
+				SetPlot(FrequencyStats);
+			}
+			catch(Exception ex)
+			{
+				_dialogs.ShowError(ex.Message);
+			}
+			finally
+			{
+				_tokenSource?.Dispose();
+				_tokenSource = null;
+				CommandManager.InvalidateRequerySuggested();
+			}
+		}
+		private bool CanOnFrequencyAnalyzeExecute(object? p) => _tokenSource == null;
+        #endregion
+		public ICommand GenerateBitKeyCommand { get; }
+		private bool CanExecuteGenerateBitKeyCommand(object? p) => SelectdCipher == "Gamma-XOR" && _tokenSource == null;
+		private async void OnGenerateBitKeyCommandExecuted(object? p)
+		{
+			try
+			{
+				_tokenSource = new();
+				if (!CheckContent(out var errorMessage))
+				{
+					_dialogs.ShowError(errorMessage);
+					Debug.WriteLine(errorMessage);
+					return;
+				}
+				var progress = new Progress<double>(progress => ProgressValue = progress);
+				var key = await _keyGen.GenerateAsync(Content, progress, _tokenSource.Token);
+				Key = key;
+				_dialogs.ShowInfo($"Ключ сгенерирован {(Key.Length < 7 ? Key : Key.Substring(0, 7) + "...")}");
+			}
+			catch(Exception ex)
+			{
+				_dialogs.ShowError(ex.Message);
+			}
+			finally
+			{
+				_tokenSource?.Dispose();
+				_tokenSource = null;
+                CommandManager.InvalidateRequerySuggested();
+            }
+		}
+        public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
+			VigenereCipher vigCipher, 
+			GronsfeldCipher gronCipher, 
+			IFrequencyAnalyzator analyzator,
+			IBitCipher bitCipher,
+			GammaCipher gammaCipher,
+			IKeyBitGenerator keyGen)
+		{
+			FrequencyAnalyzeCommand = new RelayCommand(OnFrequencyAnalyzeExecute, CanOnFrequencyAnalyzeExecute);
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
 			LoadContentCommand = new RelayCommand(OnLoadContentExecuted, CanLoadContentExecuted);
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
-			Ciphers = new() { SelectdCipher, "Виженер" };
+			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд", "Битовый алгоритм", "Gamma-XOR" };
 			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
+			_analyzator = analyzator;
+			_gronCipher = gronCipher;
 			_vigCipher = vigCipher;
 			_dialogs = dialogs;
+			_bitCipher = bitCipher;
+			_gammaCipher = gammaCipher;
+			_keyGen = keyGen;
+			GenerateBitKeyCommand = new RelayCommand(OnGenerateBitKeyCommandExecuted, CanExecuteGenerateBitKeyCommand);
 		}
 	}
 }

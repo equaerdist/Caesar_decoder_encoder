@@ -1,5 +1,7 @@
 ﻿using Caesar_decoder_encoder.Models;
+using Caesar_decoder_encoder.Services.Encryption.Parameters;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,19 +13,11 @@ using System.Windows.Input;
 
 namespace Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm
 {
-    class VigenereAlgorithm : IVigenereCipher
+    class VigenereAlgorithm : VigenereCipher
     {
-        public static int RussianAlphabetPower => 32;
-
-        public static int EnglishAlphabetPower => 26;
         private static char[,] EnglishAlphabet = InitEnglishAlphabet();
         private static char[,] RussianAlphabet = InitRussianAlphabet();
 
-       
-
-        public VigenereAlgorithm() 
-        {
-        }
         private static char[,] InitRussianAlphabet() => InitAlphabet(Language.Russian);
         private static char[,] InitEnglishAlphabet() => InitAlphabet(Language.English);
         private static char[,] InitAlphabet(Language language)
@@ -55,43 +49,21 @@ namespace Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm
             var column = charLetter - start;
             return alphabet[row, column];
         }
-        public async Task<string> DecodeAsync(string content, string key, Language language,
-            IProgress<double> progress, CancellationToken token = default) =>
-            await TransformContent(content, key, language, progress, DecodeChar, token);
-       
-        private async Task<string> TransformContent(string content, string key, Language language,
-            IProgress<double> progress, Func<int, char[,], char, char, char> transform, CancellationToken token = default)
+
+        protected override char TranformChar(VigenereParameters @params)
         {
-            return await Task.Run(() =>
-            {
-                var result = new StringBuilder();
-                var alphabet = language == Language.Russian ? RussianAlphabet : EnglishAlphabet;
-                var start = language == Language.Russian ? 'а' : 'a';
-                var onlyLettersCount = 0;
-                for (int i = 0; i < content.Length; i++)
-                {
-                    var charLetter = content[i];
-                    if (!(Alphabet.IsRussianLetter(charLetter) || Alphabet.IsEnglishLetter(charLetter)))
-                    {
-                        result.Append(charLetter);
-                        continue;
-                    }
-                    var isUp = char.IsUpper(charLetter);
-                    if (isUp)
-                        charLetter = char.ToLower(charLetter);
-                    var row = char.ToLower(key[onlyLettersCount % key.Length]) - start;
-                    var encodedChar = transform(row, alphabet, charLetter, start);
-                    if (isUp)
-                        encodedChar = char.ToUpper(encodedChar);
-                    result.Append(encodedChar);
-                    onlyLettersCount++;
-                }
-                return result.ToString();
-            });
+            var key = @params.Key;
+            var onlyLettersCount = @params.LettersAmount;
+            var start = @params.Start;
+            var charLetter = @params.CharLetter;
+            var alphabet = @params.Alphabet;
+            var row = char.ToLower(key[onlyLettersCount % key.Length]) - start;
+            Func<int, char[,], char, char, char> transform = @params.Mode == 0 ? EncodeChar : DecodeChar;
+            return transform(row, alphabet, charLetter, start);
         }
 
-        public async Task<string> EncodeAsync(string content, string key, Language language, 
-            IProgress<double> progress, CancellationToken token = default) => 
-            await TransformContent(content, key, language, progress, EncodeChar, token);
+        protected override void InitializeParameters(VigenereParameters @params)
+        {
+        }
     }
 }

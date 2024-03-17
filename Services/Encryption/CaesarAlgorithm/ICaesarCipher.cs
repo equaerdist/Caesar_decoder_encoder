@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm
 {
-    public interface ICaesarCipher : INumericEncryptor, IFrequencyAnalyzator
+    public interface ICaesarCipher : INumericEncryptor
     {
     }
 }

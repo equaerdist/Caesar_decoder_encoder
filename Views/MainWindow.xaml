@@ -3,8 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Caesar_decoder_encoder"
-        xmlns:conv="clr-namespace:Caesar_decoder_encoder.Infrastructure.Converters"
+        xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         DataContext="{Binding Source={StaticResource Locator}, Path=MainViewModel}">
@@ -23,101 +22,149 @@
             </Style>
         </Grid.Resources>
         <DockPanel>
-            <StackPanel Orientation="Horizontal"></StackPanel>
-            <Grid Margin="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                </Grid.RowDefinitions>
-                <DockPanel Grid.Row="0">
-                    <TextBlock Text="Текст" Foreground="{StaticResource text}" DockPanel.Dock="Top"></TextBlock>
-                    <TextBox 
+            <TabControl Background="{StaticResource background}">
+                <TabItem Header="Главная">
+                    <TabItem.Content>
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal"></StackPanel>
+                            <Grid Margin="20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"></RowDefinition>
+                                    <RowDefinition Height="Auto"></RowDefinition>
+                                    <RowDefinition Height="Auto"></RowDefinition>
+                                    <RowDefinition Height="Auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <DockPanel Grid.Row="0">
+                                    <TextBlock Text="Текст" Foreground="{StaticResource text}" DockPanel.Dock="Top"></TextBlock>
+                                    <TextBox 
                        ScrollViewer.VerticalScrollBarVisibility="Auto"
                          MinHeight="100" Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
                             MaxHeight="200"
                         Margin="0,15,0,0"
                          IsEnabled="{Binding Editable}">
-                    </TextBox>
-                </DockPanel>
-               
-                <Grid  Grid.Row="1" 
+                                    </TextBox>
+                                </DockPanel>
+
+                                <Grid  Grid.Row="1" 
                     Margin="0,20,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition></ColumnDefinition>
-                        <ColumnDefinition></ColumnDefinition>
-                        <ColumnDefinition></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <DockPanel Grid.Column="0">
-                        <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
-                        <TextBox Margin="20,0,0,0" 
-                                 VerticalContentAlignment="Center">
-                            <TextBox.Text>
-                                <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
-                                </Binding>
-                            </TextBox.Text>
-                        </TextBox>
-                    </DockPanel>
-                    <GridSplitter></GridSplitter>
-                    <DockPanel Grid.Column="1" Margin="40,0,0,0">
-                        <TextBlock Text="Язык" Foreground="{StaticResource text}"></TextBlock>
-                        <ComboBox 
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition></ColumnDefinition>
+                                        <ColumnDefinition></ColumnDefinition>
+                                        <ColumnDefinition></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <DockPanel Grid.Column="0">
+                                        <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
+                                        <TextBox Margin="20,0,0,0" 
+                                 VerticalContentAlignment="Center" MaxHeight="40">
+                                            <TextBox.Text>
+                                                <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
+                                                </Binding>
+                                            </TextBox.Text>
+                                        </TextBox>
+                                    </DockPanel>
+                                    <GridSplitter></GridSplitter>
+                                    <DockPanel Grid.Column="1" Margin="40,0,0,0">
+                                        <TextBlock Text="Язык" Foreground="{StaticResource text}"></TextBlock>
+                                        <ComboBox 
                                 Margin="20,0,0,0"
                               ItemsSource="{Binding Languages}" 
                               SelectedItem="{Binding SelectedLanguage}" 
                               Foreground="{StaticResource main}"></ComboBox>
-                    </DockPanel>
-                    <DockPanel Grid.Column="2" Margin="40,0,0,0">
-                        <TextBlock Text="Шифр" Foreground="{StaticResource text}"></TextBlock>
-                        <ComboBox 
+                                    </DockPanel>
+                                    <DockPanel Grid.Column="2" Margin="40,0,0,0">
+                                        <TextBlock Text="Шифр" Foreground="{StaticResource text}"></TextBlock>
+                                        <ComboBox 
                                 Margin="20,0,0,0"
                               ItemsSource="{Binding Ciphers}" 
                               SelectedItem="{Binding SelectdCipher}" 
                               Foreground="{StaticResource main}"></ComboBox>
-                    </DockPanel>
-                </Grid>
+                                    </DockPanel>
+                                </Grid>
 
-                <WrapPanel Orientation="Horizontal" 
+                                <WrapPanel Orientation="Horizontal" 
                             Grid.Row="2">
-                    <Button Command="{Binding Encode}"
+                                    <Button Command="{Binding Encode}"
                             CommandParameter="positive"
                             Margin="0,20,0,0">Зашифровать</Button>
-                    <StackPanel Width="20"></StackPanel>
-                    <Button Command="{Binding Encode}"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Command="{Binding Encode}"
                             Margin="0,20,0,0"
                             CommandParameter="negative"
                             >Расшифровать</Button>
-                    <StackPanel Width="20"></StackPanel>
-                    <Button Command="{Binding ShowPrevious}"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Command="{Binding ShowPrevious}"
                             Margin="0,20,0,0">Показать предыдущее</Button>
-                    <StackPanel Width="20"></StackPanel>
-                    <Button Content="Открыть дешифратор"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Content="Открыть дешифратор"
                               Command="{Binding OpenDecoderCommand}"
                             Margin="0,20,0,0"></Button>
-                    <StackPanel Width="20"></StackPanel>
-                    <Button Content="Загрузить из файла"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Content="Загрузить из файла"
                             Command="{Binding LoadContentCommand}"
                             Margin="0,20,0,0"></Button>
-                    <StackPanel Width="20"></StackPanel>
-                    <Button Content="Дешифровка частотным анализом"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Content="Дешифровка частотным анализом"
                             Command="{Binding DecodeWithFrequemcyCommand}"
                             Margin="0,20,0,0"></Button>
-                </WrapPanel>
-                <DockPanel Grid.Row="4"
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Content="Сгенерировать битовый ключ"
+                            Command="{Binding GenerateBitKeyCommand}"
+                            Margin="0,20,0,0"></Button>
+                                </WrapPanel>
+                                <DockPanel Grid.Row="4"
                            Margin="0,20,0,0"
                             Style="{StaticResource progress_bar}"
                            >
-                    <TextBlock Text="{Binding ProgressValue, StringFormat='00%'}"
+                                    <TextBlock Text="{Binding ProgressValue, StringFormat='00%'}"
                                Foreground="{StaticResource text}"
                                DockPanel.Dock="Left" Width="50"></TextBlock>
-                    <ProgressBar Value="{Binding ProgressValue}" 
+                                    <ProgressBar Value="{Binding ProgressValue}" 
                                  Minimum="0" 
                                  Maximum="1" 
                                  Margin="50,0,0,0"
                                  ></ProgressBar>
-                </DockPanel>
-            </Grid>
+                                </DockPanel>
+                            </Grid>
+                        </DockPanel>
+                    </TabItem.Content>
+                </TabItem>
+                <TabItem Header="График">
+                    <Grid Background="{StaticResource background}" Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="4*"></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        
+                        <oxy:PlotView Model="{Binding Model}"
+                                      Grid.Row="0"
+                                      x:Name="plot"
+                                      Background="{StaticResource background}"></oxy:PlotView>
+                        <TextBlock Text="Сделайте первый анализ"
+                                   TextAlignment="Center"
+                                   FontSize="25"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource text}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Hidden"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=plot, Path=Model}" 
+                                                     Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Grid.Row="1" 
+                                    Margin="0,20,20,20" 
+                                    HorizontalAlignment="Right">
+                            <Button Command="{Binding FrequencyAnalyzeCommand}">Проанализировать</Button>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            
         </DockPanel>
     </Grid>
 </Window>

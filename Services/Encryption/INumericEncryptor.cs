@@ -11,8 +11,8 @@ namespace Caesar_decoder_encoder.Services.Encryption
 {
     public interface INumericEncryptor
     {
-        int RussianAlphabetPower { get; }
-        int EnglishAlphabetPower { get; }
+        int RussianAlphabetPower => 32;
+        int EnglishAlphabetPower => 26;
         Task<string> EncodeAsync(string content, BigInteger key, Language language,
             IProgress<double> progress, CancellationToken token = default);
         Task<string> DecodeAsync(string content, BigInteger key, Language language, 
