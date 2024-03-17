@@ -8,6 +8,7 @@ using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
 using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
+using Caesar_decoder_encoder.Services.KeyBitGenerator;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -87,7 +88,7 @@ namespace Caesar_decoder_encoder.ViewModels
         #endregion
         #region Зашифровать
         public ICommand Encode { get; set; }
-		private bool CanEncodeExecuted(object? p) => true;
+		private bool CanEncodeExecuted(object? p) => _tokenSource == null;
         private async void OnEncodeExecuted(object? p)
         {
             try
@@ -152,6 +153,7 @@ namespace Caesar_decoder_encoder.ViewModels
                 Editable = true;
                 _tokenSource?.Dispose();
                 _tokenSource = null;
+                CommandManager.InvalidateRequerySuggested();
             }
         }
         private bool ValidateContent(out string errorMessage)
@@ -173,12 +175,23 @@ namespace Caesar_decoder_encoder.ViewModels
         private bool CheckContent(out string message)
 		{
 			message = string.Empty;
-            Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
-                    Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
-			if (!Content.Any(validator))
-				return true;
-			message = "Текст содержит символы другой раскладки";
-			return false;
+            if (SelectdCipher != "Gamma-XOR")
+            {
+				if (SelectdCipher == "Битовый алгоритм")
+					return true;
+                Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
+                   Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
+                if (!Content.Any(validator))
+                    return true;
+                message = "Текст содержит символы другой раскладки";
+                return false;
+            }
+           else
+			{
+                message = "Текст должен состоять только из битов";
+                string pattern = "^[01]+$";
+                return (Regex.IsMatch(Content, pattern));
+            }
         }
 		private bool CheckKey(out string message)
 		{
@@ -252,6 +265,7 @@ namespace Caesar_decoder_encoder.ViewModels
         private readonly IUserDialogs _dialogs;
         private readonly IBitCipher _bitCipher;
         private readonly GammaCipher _gammaCipher;
+        private readonly IKeyBitGenerator _keyGen;
         #endregion
         #region команда возвращения
         public ICommand ShowPrevious { get; }
@@ -315,7 +329,7 @@ namespace Caesar_decoder_encoder.ViewModels
 			_dialogs.ShowInfo("Частотный анализ выполнен. Возможный вариант представлен");
 			Content = result;
 		}
-		private bool CanDecodeCommandExecuted(object? p) => true;
+		private bool CanDecodeCommandExecuted(object? p) => _tokenSource == null;
         #endregion
         #region команда частотного анализа
         private void SetPlot(ImmutableDictionary<char, int> points)
@@ -396,19 +410,47 @@ namespace Caesar_decoder_encoder.ViewModels
 			{
 				_tokenSource?.Dispose();
 				_tokenSource = null;
+				CommandManager.InvalidateRequerySuggested();
 			}
 		}
-		private bool CanOnFrequencyAnalyzeExecute(object? p)
-		{
-			return true;
-		}
+		private bool CanOnFrequencyAnalyzeExecute(object? p) => _tokenSource == null;
         #endregion
+		public ICommand GenerateBitKeyCommand { get; }
+		private bool CanExecuteGenerateBitKeyCommand(object? p) => SelectdCipher == "Gamma-XOR" && _tokenSource == null;
+		private async void OnGenerateBitKeyCommandExecuted(object? p)
+		{
+			try
+			{
+				_tokenSource = new();
+				if (!CheckContent(out var errorMessage))
+				{
+					_dialogs.ShowError(errorMessage);
+					Debug.WriteLine(errorMessage);
+					return;
+				}
+				var progress = new Progress<double>(progress => ProgressValue = progress);
+				var key = await _keyGen.GenerateAsync(Content, progress, _tokenSource.Token);
+				Key = key;
+				_dialogs.ShowInfo($"Ключ сгенерирован {(Key.Length < 7 ? Key : Key.Substring(0, 7) + "...")}");
+			}
+			catch(Exception ex)
+			{
+				_dialogs.ShowError(ex.Message);
+			}
+			finally
+			{
+				_tokenSource?.Dispose();
+				_tokenSource = null;
+                CommandManager.InvalidateRequerySuggested();
+            }
+		}
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
 			VigenereCipher vigCipher, 
 			GronsfeldCipher gronCipher, 
 			IFrequencyAnalyzator analyzator,
 			IBitCipher bitCipher,
-			GammaCipher gammaCipher)
+			GammaCipher gammaCipher,
+			IKeyBitGenerator keyGen)
 		{
 			FrequencyAnalyzeCommand = new RelayCommand(OnFrequencyAnalyzeExecute, CanOnFrequencyAnalyzeExecute);
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
@@ -425,6 +467,8 @@ namespace Caesar_decoder_encoder.ViewModels
 			_dialogs = dialogs;
 			_bitCipher = bitCipher;
 			_gammaCipher = gammaCipher;
+			_keyGen = keyGen;
+			GenerateBitKeyCommand = new RelayCommand(OnGenerateBitKeyCommandExecuted, CanExecuteGenerateBitKeyCommand);
 		}
 	}
 }

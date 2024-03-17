@@ -11,7 +11,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.BitAlgorithm
     public class BitAlgorithm : IBitCipher
     {
         private int _amountOfBits = 16;
-        private double _updateFrequency = 0.05;
+        private double _updateFrequency = 0.02;
         private byte _base = 2;
         public async Task<string> DecodeAsync(string content,
             IProgress<double> progress, 
@@ -23,7 +23,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.BitAlgorithm
                 var result = new StringBuilder();
                 for (int i = 0; i < content.Length; i+= _amountOfBits)
                 {
-                    var currentPercent = i / content.Length;
+                    var currentPercent = (double)i / content.Length;
                     if (currentPercent - lastPercent > _updateFrequency)
                     {
                         progress.Report(currentPercent);
@@ -33,7 +33,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.BitAlgorithm
                     char restoredSymbol = Convert.ToChar(Convert.ToUInt16(currentLetter, _base));
                     result.Append(restoredSymbol);
                 }
-               
+                progress.Report(1);
                 return result.ToString();
             }, token);
            
@@ -49,7 +49,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.BitAlgorithm
                 var result = new StringBuilder();
                 for (int i = 0; i < content.Length; i++)
                 {
-                    var currentPercent = i / content.Length;
+                    var currentPercent = (double)i / content.Length;
                     if (currentPercent - lastPercent > _updateFrequency)
                     {
                         progress.Report(currentPercent);
@@ -59,6 +59,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.BitAlgorithm
                     string binaryRepresentation = Convert.ToString(charLetter, _base).PadLeft(_amountOfBits, '0');
                     result.Append(binaryRepresentation);
                 }
+                progress.Report(1);
                 return result.ToString();
             }, token);
         }

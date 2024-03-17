@@ -6,6 +6,7 @@ using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
 using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
+using Caesar_decoder_encoder.Services.KeyBitGenerator;
 using Caesar_decoder_encoder.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -28,7 +29,8 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
                 .AddSingleton<GronsfeldCipher, GronsfeldAlgorithm>()
                 .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>()
                 .AddSingleton<IBitCipher, BitAlgorithm>()
-                .AddSingleton<GammaCipher, GammaAlgorithm>();
+                .AddSingleton<GammaCipher, GammaAlgorithm>()
+                .AddSingleton<IKeyBitGenerator, KeyBitGenerator>();
         }
     }
 }

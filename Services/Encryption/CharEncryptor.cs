@@ -12,7 +12,7 @@ namespace Caesar_decoder_encoder.Services.Encryption
 {
     public abstract class CharEncryptor<TParams> : AlphabetBasedEncryptor where TParams : IParameters, new()
     {
-        protected double _updateFrequency = 0.02;
+        protected double _updateFrequency = 0.01;
         public override async Task<string> DecodeAsync(string content, string key, Language language, 
             IProgress<double> progress, CancellationToken token = default)
         {
@@ -58,7 +58,7 @@ namespace Caesar_decoder_encoder.Services.Encryption
                     if (current - lastPercent >= _updateFrequency)
                     {
                         progress.Report(current);
-                        current = lastPercent;
+                        lastPercent = current;
                     }
                     var isUp = char.IsUpper(charLetter);
                     if (isUp)

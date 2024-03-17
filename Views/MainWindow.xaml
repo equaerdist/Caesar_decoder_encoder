@@ -55,7 +55,7 @@
                                     <DockPanel Grid.Column="0">
                                         <TextBlock Foreground="{StaticResource text}">Ключ</TextBlock>
                                         <TextBox Margin="20,0,0,0" 
-                                 VerticalContentAlignment="Center">
+                                 VerticalContentAlignment="Center" MaxHeight="40">
                                             <TextBox.Text>
                                                 <Binding Path="Key" UpdateSourceTrigger="PropertyChanged">
                                                 </Binding>
@@ -105,6 +105,10 @@
                                     <StackPanel Width="20"></StackPanel>
                                     <Button Content="Дешифровка частотным анализом"
                             Command="{Binding DecodeWithFrequemcyCommand}"
+                            Margin="0,20,0,0"></Button>
+                                    <StackPanel Width="20"></StackPanel>
+                                    <Button Content="Сгенерировать битовый ключ"
+                            Command="{Binding GenerateBitKeyCommand}"
                             Margin="0,20,0,0"></Button>
                                 </WrapPanel>
                                 <DockPanel Grid.Row="4"

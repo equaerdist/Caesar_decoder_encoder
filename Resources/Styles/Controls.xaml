@@ -23,6 +23,11 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="#FF5D5038"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <Style TargetType="TextBlock">
         <Setter Property="FontSize" Value="20"></Setter>
