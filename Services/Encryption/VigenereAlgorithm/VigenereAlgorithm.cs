@@ -62,14 +62,8 @@ namespace Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm
             return transform(row, alphabet, charLetter, start);
         }
 
-        protected override VigenereParameters InitializeParameters(short mode, Language language, string key)
+        protected override void InitializeParameters(VigenereParameters @params)
         {
-            VigenereParameters @params = new();
-            @params.Mode = mode;
-            @params.Key = key;
-            @params.Alphabet = language == Language.Russian ? RussianAlphabet : EnglishAlphabet;
-            @params.Start = language == Language.Russian ? 'а' : 'a';
-            return @params;
         }
     }
 }

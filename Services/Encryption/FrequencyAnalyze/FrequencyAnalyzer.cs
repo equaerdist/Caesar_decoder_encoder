@@ -13,7 +13,8 @@ namespace Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze
     public class FrequencyAnalyzer : IFrequencyAnalyzator
     {
         private readonly Dictionary<string, FrequencyAnalyzeResult> _cache = new();
-        private static readonly double _updateFrequency = 0.01;
+        private static readonly double _updateFrequency = 0.08;
+        private static string _stage = "Расшифровка символов";
         #region частота русских букв
         public static readonly ImmutableDictionary<char, double> RusFrequency =
             new Dictionary<char, double>()
@@ -90,14 +91,19 @@ namespace Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze
             return await Task.Run(async () =>
             {
                 var analyzeResult = await GetFrequencyStats(content, progress, token);
-                var contentFrequency = analyzeResult.Frequency.ToDictionary(v => v.Key, v => v.Value);
+                var contentFrequency = analyzeResult.Frequency.ToDictionary(v => v.Key, v => (double)v.Value);
                 var lengthWithLetters = analyzeResult.LettersCount;
                 contentFrequency = contentFrequency
                     .Select(p => (p.Key, p.Value / lengthWithLetters * 100))
                     .OrderByDescending(p => p.Item2)
                     .ToDictionary(t => t.Key, t => t.Item2);
-                var alphabetDict = language == Language.Russian ? RusFrequency : EnglishFrequency;
-                var decodeDictionary = contentFrequency.Zip(alphabetDict).ToDictionary(t => t.First.Key, t => t.Second.Key);
+                var lastPercent = 0d;
+                var alphabetDict = language == Language.Russian ? RusFrequency
+                    .OrderByDescending(t => t.Value)
+                    .ToDictionary(t => t.Key, t => t.Value) 
+                : EnglishFrequency.ToDictionary(t => t.Key, t => t.Value);
+                var decodeDictionary = contentFrequency.Zip(alphabetDict)
+                .ToDictionary(t => t.First.Key, t => t.Second.Key);
                 var result = new StringBuilder();
                 for (int i = 0; i < content.Length; i++)
                 {
@@ -115,10 +121,13 @@ namespace Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze
                         decodedChar = char.ToUpper(decodedChar);
                     result.Append(decodedChar);
                     var currentPercent = (double)i / content.Length / 2;
-                    if (currentPercent > _updateFrequency)
-                        progress.Report(("Расшифровка символов", currentPercent));
+                    if (currentPercent - lastPercent > _updateFrequency)
+                    {
+                        progress.Report((_stage, currentPercent));
+                        lastPercent = currentPercent;
+                    }
                 }
-                progress.Report(("Расшифровка символов", 1));
+                progress.Report((_stage, 1));
                 return result.ToString();
             }, token);
 
@@ -143,7 +152,7 @@ namespace Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze
                     lengthWithLetters++;
                     var charLetter = char.ToLower(letter);
                     if (!contentFrequency.ContainsKey(charLetter))
-                        contentFrequency.Add(charLetter, 0);
+                        contentFrequency.Add(charLetter, 1);
                     else
                         contentFrequency[charLetter]++;
                     var currentPercent = (double)i / content.Length / 2;

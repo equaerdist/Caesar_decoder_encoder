@@ -2,8 +2,10 @@
 using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.Services;
 using Caesar_decoder_encoder.Services.Dialogs;
+using Caesar_decoder_encoder.Services.Encryption.BitAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
+using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using OxyPlot;
@@ -122,6 +124,19 @@ namespace Caesar_decoder_encoder.ViewModels
                        multiply == "positive" ? _gronCipher.EncodeAsync : _gronCipher.DecodeAsync;
                     result = await action(Content, Key, language, progress, _tokenSource.Token);
                 }
+				else if(SelectdCipher == "Битовый алгоритм")
+				{
+					Func<string, IProgress<double>, CancellationToken, Task<string>> action = 
+						multiply == "positive" ? _bitCipher.EncodeAsync : _bitCipher.DecodeAsync;
+					result = await action(Content, progress, _tokenSource.Token);
+				}
+				else if(SelectdCipher == "Gamma-XOR")
+				{
+                    Func<string, string, Language,
+                     IProgress<double>, CancellationToken, Task<string>> action =
+                     multiply == "positive" ? _gammaCipher.EncodeAsync : _gammaCipher.DecodeAsync;
+                    result = await action(Content, Key, language, progress, _tokenSource.Token);
+                }
                 else
                     throw new ArgumentException(nameof(SelectdCipher));
                 _previous.Add(Content);
@@ -169,11 +184,11 @@ namespace Caesar_decoder_encoder.ViewModels
 		{
 			if (SelectdCipher == "Цезарь")
 			{
-                message = "Число должно быть целым";
-                string pattern = @"^-?\d+$";
+				message = "Число должно быть целым";
+				string pattern = @"^-?\d+$";
 				return Regex.IsMatch(Key, pattern);
 			}
-			else if(SelectdCipher == "Виженер")
+			else if (SelectdCipher == "Виженер")
 			{
 				message = "Ключ содержит буквы другой раскладки";
 				if (SelectedLanguage == "Russian" && Key.Any(c => !Alphabet.IsRussianLetter(c)))
@@ -182,10 +197,21 @@ namespace Caesar_decoder_encoder.ViewModels
 					return false;
 				return true;
 			}
-			else if(SelectdCipher == "Гронсфельд")
+			else if (SelectdCipher == "Гронсфельд")
 			{
 				message = "Число должно быть целым и неотрицательным";
 				return Regex.IsMatch(Key, @"^\d+$");
+			}
+			else if (SelectdCipher == "Битовый алгоритм")
+			{
+				message = string.Empty;
+				return true;
+			}
+			else if (SelectdCipher == "Gamma-XOR")
+			{
+				message = "Ключ должен состоять только из битов";
+				string pattern = "^[01]+$";
+				return (Regex.IsMatch(Key, pattern)) ;
 			}
 			else
 				throw new ArgumentException(nameof(SelectdCipher));
@@ -224,6 +250,8 @@ namespace Caesar_decoder_encoder.ViewModels
         private readonly GronsfeldCipher _gronCipher;
         private readonly VigenereCipher _vigCipher;
         private readonly IUserDialogs _dialogs;
+        private readonly IBitCipher _bitCipher;
+        private readonly GammaCipher _gammaCipher;
         #endregion
         #region команда возвращения
         public ICommand ShowPrevious { get; }
@@ -241,8 +269,7 @@ namespace Caesar_decoder_encoder.ViewModels
 		{
 			int decodedKey = 0;
 			var language = ParseLanguage();
-			string errorMessage = string.Empty;
-			if (!ValidateContent(out errorMessage)) return;
+			if (!ValidateContent(out var errorMessage)) return;
 			if (_dialogs.ShowDecodeWindow(ref _content, language, ref decodedKey))
 			{
 				var message = $"Ваш текст расшифрован. Ключ {decodedKey}";
@@ -290,7 +317,8 @@ namespace Caesar_decoder_encoder.ViewModels
 		}
 		private bool CanDecodeCommandExecuted(object? p) => true;
         #endregion
-		private void SetPlot(ImmutableDictionary<char, int> points)
+        #region команда частотного анализа
+        private void SetPlot(ImmutableDictionary<char, int> points)
 		{
 			if (points.Count == 0)
 				return;
@@ -374,10 +402,13 @@ namespace Caesar_decoder_encoder.ViewModels
 		{
 			return true;
 		}
+        #endregion
         public EncoderViewModel(ICaesarCipher cipher, IUserDialogs dialogs, 
 			VigenereCipher vigCipher, 
 			GronsfeldCipher gronCipher, 
-			IFrequencyAnalyzator analyzator)
+			IFrequencyAnalyzator analyzator,
+			IBitCipher bitCipher,
+			GammaCipher gammaCipher)
 		{
 			FrequencyAnalyzeCommand = new RelayCommand(OnFrequencyAnalyzeExecute, CanOnFrequencyAnalyzeExecute);
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
@@ -385,13 +416,15 @@ namespace Caesar_decoder_encoder.ViewModels
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
-			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд" };
+			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд", "Битовый алгоритм", "Gamma-XOR" };
 			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
 			_analyzator = analyzator;
 			_gronCipher = gronCipher;
 			_vigCipher = vigCipher;
 			_dialogs = dialogs;
+			_bitCipher = bitCipher;
+			_gammaCipher = gammaCipher;
 		}
 	}
 }

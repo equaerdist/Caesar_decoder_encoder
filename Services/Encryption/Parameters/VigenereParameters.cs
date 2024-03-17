@@ -14,5 +14,6 @@ namespace Caesar_decoder_encoder.Services.Encryption.Parameters
         public char Start { get; set; }
         public short Mode { get; set; }
         public char[,] Alphabet { get; set; } = null!;
+        public bool SkipNotAlphabet { get; set; }
     }
 }

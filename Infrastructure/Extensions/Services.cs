@@ -1,7 +1,9 @@
 ﻿using Caesar_decoder_encoder.Services.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Dialogs;
+using Caesar_decoder_encoder.Services.Encryption.BitAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
+using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using Caesar_decoder_encoder.ViewModels;
@@ -24,7 +26,9 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
                 .AddSingleton<VigenereCipher, VigenereAlgorithm>()
                 .AddSingleton<IUserDialogs, UserDialogs>()
                 .AddSingleton<GronsfeldCipher, GronsfeldAlgorithm>()
-                .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>();
+                .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>()
+                .AddSingleton<IBitCipher, BitAlgorithm>()
+                .AddSingleton<GammaCipher, GammaAlgorithm>();
         }
     }
 }

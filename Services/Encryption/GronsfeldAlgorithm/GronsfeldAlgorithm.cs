@@ -24,16 +24,6 @@ namespace Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm
         {
             return (char)((Mod(((charLetter - start) - key), alphabetLength)) + start);
         }
-        protected override GronsfeldParameters InitializeParameters(short mode, Language language, string key)
-        {
-            GronsfeldParameters @params = new();
-            @params.Mode = mode;
-            @params.Key = key;
-            @params.AlphabetLength = language == Language.Russian ? RussianAlphabetPower : EnglishAlphabetPower;
-            @params.Start = language == Language.Russian ? 'а' : 'a';
-            return @params;
-        }
-
         protected override char TranformChar(GronsfeldParameters @params)
         {
             var key = @params.Key;
@@ -41,6 +31,10 @@ namespace Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm
             Func<char, short, char, int, char> transformChar = @params.Mode == 0 ? Encode : Decode;
             var encodedChar = transformChar(@params.CharLetter, currentOffset, @params.Start, @params.AlphabetLength);
             return encodedChar;
+        }
+
+        protected override void InitializeParameters(GronsfeldParameters @params)
+        {
         }
     }
 }
