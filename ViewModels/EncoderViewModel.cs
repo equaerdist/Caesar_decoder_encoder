@@ -7,6 +7,7 @@ using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
 using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.SimplifiedDes;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using Caesar_decoder_encoder.Services.KeyBitGenerator;
 using OxyPlot;
@@ -136,6 +137,15 @@ namespace Caesar_decoder_encoder.ViewModels
                      multiply == "positive" ? _gammaCipher.EncodeAsync : _gammaCipher.DecodeAsync;
                     result = await action(Content, Key, language, progress, _tokenSource.Token);
                 }
+				else if(SelectdCipher == "Simple DES")
+				{
+                    Func<string, string, Language,
+                     IProgress<double>, IProgress<string>, CancellationToken, Task<string>> action =
+                     multiply == "positive" ? _des.EncodeAsync : _des.DecodeAsync;
+					var utils = _dialogs.ShowProgress("Des алгоритм");
+                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_tokenSource.Token, utils.Item3);
+					result = await action(Content, Key, language, utils.Item1, utils.Item2, linkedCts.Token);
+                }
                 else
                     throw new ArgumentException(nameof(SelectdCipher));
                 _previous.Add(Content);
@@ -173,26 +183,28 @@ namespace Caesar_decoder_encoder.ViewModels
         private bool CheckContent(out string message)
 		{
 			message = string.Empty;
-            if (SelectdCipher != "Gamma-XOR")
-            {
+			if (SelectdCipher != "Gamma-XOR")
+			{
 				if (SelectdCipher == "Битовый алгоритм")
 					return true;
-                Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
-                   Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
-                if (!Content.Any(validator))
-                    return true;
-                message = "Текст содержит символы другой раскладки";
-                return false;
-            }
-           else
+				Func<char, bool> validator = SelectedLanguage.Equals("Russian") ?
+				   Alphabet.IsEnglishLetter : Alphabet.IsRussianLetter;
+				if (!Content.Any(validator))
+					return true;
+				message = "Текст содержит символы другой раскладки";
+				return false;
+			}
+			else if (SelectdCipher == "Simple DES") return true;
+			else
 			{
-                message = "Текст должен состоять только из битов";
-                string pattern = "^[01]+$";
-                return (Regex.IsMatch(Content, pattern));
-            }
+				message = "Текст должен состоять только из битов";
+				string pattern = "^[01]+$";
+				return (Regex.IsMatch(Content, pattern));
+			}
         }
 		private bool CheckKey(out string message)
 		{
+			message = string.Empty;
 			if (SelectdCipher == "Цезарь")
 			{
 				message = "Число должно быть целым";
@@ -222,8 +234,10 @@ namespace Caesar_decoder_encoder.ViewModels
 			{
 				message = "Ключ должен состоять только из битов";
 				string pattern = "^[01]+$";
-				return (Regex.IsMatch(Key, pattern)) ;
+				return (Regex.IsMatch(Key, pattern));
 			}
+			else if (SelectdCipher == "Simple DES")
+				return true;
 			else
 				throw new ArgumentException(nameof(SelectdCipher));
         }
@@ -264,6 +278,7 @@ namespace Caesar_decoder_encoder.ViewModels
         private readonly IBitCipher _bitCipher;
         private readonly GammaCipher _gammaCipher;
         private readonly IKeyBitGenerator _keyGen;
+        private readonly ISimplifiedDes _des;
         #endregion
         #region команда возвращения
         public ICommand ShowPrevious { get; }
@@ -448,7 +463,8 @@ namespace Caesar_decoder_encoder.ViewModels
 			IFrequencyAnalyzator analyzator,
 			IBitCipher bitCipher,
 			GammaCipher gammaCipher,
-			IKeyBitGenerator keyGen)
+			IKeyBitGenerator keyGen,
+			ISimplifiedDes des)
 		{
 			FrequencyAnalyzeCommand = new RelayCommand(OnFrequencyAnalyzeExecute, CanOnFrequencyAnalyzeExecute);
 			DecodeWithFrequemcyCommand = new RelayCommand(OnDecodeCommandExecuted, CanDecodeCommandExecuted);
@@ -456,7 +472,7 @@ namespace Caesar_decoder_encoder.ViewModels
 			OpenDecoderCommand = new RelayCommand(OnOpenDecoderExecuted, CanOpenDecoderExecuted);
 			Encode = new RelayCommand(OnEncodeExecuted, CanEncodeExecuted);
 			ShowPrevious = new RelayCommand(OnShowPreviousExecuted, CanShowPreviousExecuted);
-			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд", "Битовый алгоритм", "Gamma-XOR" };
+			Ciphers = new() { SelectdCipher, "Виженер", "Гронсфельд", "Битовый алгоритм", "Gamma-XOR", "Simple DES" };
 			Languages = new() { SelectedLanguage, "English" };
 			_cipher = cipher;
 			_analyzator = analyzator;
@@ -466,6 +482,7 @@ namespace Caesar_decoder_encoder.ViewModels
 			_bitCipher = bitCipher;
 			_gammaCipher = gammaCipher;
 			_keyGen = keyGen;
+			_des = des;
 			GenerateBitKeyCommand = new RelayCommand(OnGenerateBitKeyCommandExecuted, CanExecuteGenerateBitKeyCommand);
 		}
 	}

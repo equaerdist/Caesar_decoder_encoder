@@ -18,7 +18,8 @@ namespace Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm
         protected override char TranformChar(GammaParameters @params)
         {
             var charLetter = byte.Parse(@params.CharLetter.ToString());
-            var keyForSingle = byte.Parse(@params.Key[@params.LettersAmount % @params.Key.Length].ToString());
+            var keyForSingle = byte.Parse(@params.Key[@params.LettersAmount % @params.Key.Length]
+                .ToString());
             return ((charLetter + keyForSingle) % 2).ToString().First();
         }
     }

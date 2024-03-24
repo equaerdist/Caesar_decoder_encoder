@@ -5,6 +5,7 @@ using Caesar_decoder_encoder.Services.Encryption.CaesarAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.FrequencyAnalyze;
 using Caesar_decoder_encoder.Services.Encryption.GammaAlgorithm;
 using Caesar_decoder_encoder.Services.Encryption.GronsfeldAlgorithm;
+using Caesar_decoder_encoder.Services.Encryption.SimplifiedDes;
 using Caesar_decoder_encoder.Services.Encryption.VigenereAlgorithm;
 using Caesar_decoder_encoder.Services.KeyBitGenerator;
 using Caesar_decoder_encoder.ViewModels;
@@ -30,7 +31,8 @@ namespace Caesar_decoder_encoder.Infrastructure.Extensions
                 .AddSingleton<IFrequencyAnalyzator, FrequencyAnalyzer>()
                 .AddSingleton<IBitCipher, BitAlgorithm>()
                 .AddSingleton<GammaCipher, GammaAlgorithm>()
-                .AddSingleton<IKeyBitGenerator, KeyBitGenerator>();
+                .AddSingleton<IKeyBitGenerator, KeyBitGenerator>()
+                .AddSingleton<ISimplifiedDes, SimplifiedDes>();
         }
     }
 }

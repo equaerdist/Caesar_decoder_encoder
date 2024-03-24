@@ -1,11 +1,13 @@
 ﻿using Caesar_decoder_encoder.Models;
 using Caesar_decoder_encoder.ViewModels;
+using Caesar_decoder_encoder.Views;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -50,6 +52,12 @@ namespace Caesar_decoder_encoder.Services.Dialogs
 
         public void ShowInfo(string message) => 
             MessageBox.Show(message, "modal", MessageBoxButton.OK, MessageBoxImage.Information);
-      
+
+        public (IProgress<double>, IProgress<string>, CancellationToken, Action) ShowProgress(string windowName)
+        {
+            var window = new ProgressWindow();
+            window.Show();
+            return (window.Progress, window.Status, window.Token, window.Close);
+        }
     }
 }

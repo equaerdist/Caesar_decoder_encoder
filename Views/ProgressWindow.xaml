@@ -1,0 +1,30 @@
+﻿<Window x:Class="Caesar_decoder_encoder.Views.ProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Caesar_decoder_encoder.Views"
+        mc:Ignorable="d"
+        Title="ProgressWindow" Height="450" Width="800">
+    <Grid Background="{StaticResource background}">
+        <DockPanel Margin="25">
+            <StackPanel DockPanel.Dock="Bottom" 
+                        Orientation="Horizontal"
+                        Margin="0,10,0,0">
+                <Button Margin="10,0,0,0"
+                        Click="Button_Click"
+                       >Cancel</Button>
+            </StackPanel>
+            <ProgressBar DockPanel.Dock="Bottom"
+                         x:Name="Progress_view"
+                         Height="15"
+                         Minimum="0"
+                         Maximum="1"
+                         Margin="0,10,0,0"></ProgressBar>
+            <TextBox IsReadOnly="True"
+                     x:Name="Content_box"
+                     HorizontalScrollBarVisibility="Auto"
+                     MaxHeight="300" VerticalScrollBarVisibility="Auto"></TextBox>
+        </DockPanel>
+    </Grid>
+</Window>
